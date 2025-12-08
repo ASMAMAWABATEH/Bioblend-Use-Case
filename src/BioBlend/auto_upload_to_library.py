@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 from bioblend.galaxy import GalaxyInstance
 import os
+from dotenv import load_dotenv
 
 # ----------------------------
-# CONFIGURATION
+# LOAD ENV VARIABLES
 # ----------------------------
-GALAXY_URL = "http://localhost:8080"       # Change if needed
-API_KEY = "b8ba458fe9b1c919040db8288c56ed06"              # Replace with your Galaxy API key
-FILE_NAME = "biobhistory.fastq"            # File to upload
-FILE_TYPE = "fastqsanger"                  # Galaxy dataset type
-NEW_LIBRARY_NAME = "MyLibrary"             # Name if a new library needs to be created
-NEW_LIBRARY_DESC = "Automatically created library via Bioblend"
+load_dotenv()  # Loads variables from .env file
+
+GALAXY_URL = os.getenv("GALAXY_URL")
+API_KEY = os.getenv("GALAXY_API_KEY")
+FILE_NAME = os.getenv("FILE_NAME", "biobhistory.fastq")  # Default value if not in .env
+FILE_TYPE = os.getenv("FILE_TYPE", "fastqsanger")
+NEW_LIBRARY_NAME = os.getenv("NEW_LIBRARY_NAME", "MyLibrary")
+NEW_LIBRARY_DESC = os.getenv("NEW_LIBRARY_DESC", "Automatically created library via Bioblend")
 
 # ----------------------------
 # CONNECT TO GALAXY

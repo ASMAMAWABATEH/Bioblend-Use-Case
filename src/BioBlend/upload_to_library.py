@@ -25,10 +25,7 @@ if not os.path.exists(FILE_NAME):
     exit(1)
 
 # ----------------------------
-# UPLOAD FILE TO DATA LIBRARY
-# ----------------------------
-if LIBRARY_ID == "replace_with_actual_library_id":
-    print("Error: Please set LIBRARY_ID to a valid library ID before running the script.")
+print("fore running the script.")
     exit(1)
 
 print(f"Uploading '{FILE_NAME}' to library ID {LIBRARY_ID}...")
