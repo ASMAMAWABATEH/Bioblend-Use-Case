@@ -1,48 +1,8 @@
 {
-  "a_galaxy_workflow": "true",
-  "annotation": "First created workflow for testing workflow tasks.",
-  "comments": [],
-  "format-version": "0.1",
   "name": "First_workflow",
-  "report": {
-    "markdown": "\n# Workflow Execution Report\n\n## Workflow Inputs\n```galaxy\ninvocation_inputs()\n```\n\n## Workflow Outputs\n```galaxy\ninvocation_outputs()\n```\n\n## Workflow\n```galaxy\nworkflow_display()\n```\n"
-  },
   "steps": {
     "0": {
-      "annotation": "",
-      "content_id": "cat1",
-      "errors": null,
-      "id": 0,
-      "input_connections": {},
-      "inputs": [
-        {
-          "description": "runtime parameter for tool Concatenate datasets",
-          "name": "input1"
-        }
-      ],
-      "label": null,
-      "name": "Concatenate datasets",
-      "outputs": [
-        {
-          "name": "out_file1",
-          "type": "input"
-        }
-      ],
-      "position": {
-        "left": 0.0,
-        "top": 0.0
-      },
-      "post_job_actions": {},
-      "tool_id": "cat1",
-      "tool_state": "{\"input1\": {\"__class__\": \"RuntimeValue\"}, \"queries\": [], \"__page__\": 0, \"__rerun_remap_job_id__\": null}",
-      "tool_version": "1.0.0",
-      "type": "tool",
-      "uuid": "b15c1d12-0a6b-475e-8152-ef982a3fcd96",
-      "when": null,
-      "workflow_outputs": []
+      "tool_id": "cat1"
     }
-  },
-  "tags": [],
-  "uuid": "e9b70947-9828-4bea-8af0-78f05fce6e7e",
-  "version": 0
+  }
 }
