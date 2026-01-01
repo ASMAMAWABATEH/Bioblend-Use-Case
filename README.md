@@ -70,7 +70,6 @@ This repository demonstrates practical automation of the [Galaxy](https://galaxy
 ├── poetry.toml
 └── pytest.ini
 
-
 ---
 
 ## Setup and Installation
@@ -100,20 +99,21 @@ Usage
 
 The scripts in src/BioBlend/ automate Galaxy tasks:
 Script	                    Purpose
--connect_to_galaxy.py	Establishes authentication and connection to a Galaxy server
--view_histories_datasets.py	Lists and inspects Galaxy histories and datasets
--bioblend_history_run.py	Creates and runs analyses in Galaxy histories
--upload_and_run_tool.py	Uploads datasets and executes Galaxy tools
--auto_upload_to_library.py	Automatically uploads datasets to Galaxy data libraries
--interactive_upload_to_library.py	Interactive upload of datasets to libraries
--upload_to_library.py	Direct uploads to Galaxy libraries
--view_data_library.py	Views and inspects Galaxy data libraries
--create_sample_workflow.py	Creates a sample Galaxy workflow
--export_import_workflow.py	Exports and imports Galaxy workflows
--invoke_workflow.py	Invokes and executes workflows
--view_workflows.py	Lists and inspects available workflows
+-connect_to_galaxy.py	      # Establishes authentication and connection to a Galaxy server
+-view_histories_datasets.py	  # Lists and inspects Galaxy histories and datasets
+-bioblend_history_run.py	  # Creates and runs analyses in Galaxy histories
+-upload_and_run_tool.py	      # Uploads datasets and executes Galaxy tools
+-auto_upload_to_library.py	  # Automatically uploads datasets to Galaxy data libraries
+-interactive_upload_to_library.py	# Interactive upload of datasets to libraries
+-upload_to_library.py	      # Direct uploads to Galaxy libraries
+-view_data_library.py	      # Views and inspects Galaxy data libraries
+-create_sample_workflow.py	  # Creates a sample Galaxy workflow
+-export_import_workflow.py	  # Exports and imports Galaxy workflows
+-invoke_workflow.py	          # Invokes and executes workflows
+-view_workflows.py	          # Lists and inspects available workflows
 
 All scripts are modular and reusable for integration into larger pipelines.
+
 Testing
 
 Unit tests are located in the tests/ folder and mirror the scripts in src/BioBlend/.
@@ -138,12 +138,9 @@ CI/CD Integration
 
 This project includes a GitHub Actions workflow (.github/workflows/ci.yml) that:
 
-    Checks out the repository code
-
-    Sets up a Python environment
-
-    Installs dependencies
-
-    Runs all unit tests automatically
+    -Checks out the repository code
+    -Sets up a Python environment
+    -Installs dependencies
+    -Runs all unit tests automatically
 
 Every push or pull request triggers the CI workflow to maintain code quality and reliability.
