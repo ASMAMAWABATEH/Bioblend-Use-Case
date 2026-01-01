@@ -140,13 +140,6 @@ pytest tests/-V
 
 The tests verify that each function returns the expected results and that Galaxy API interactions behave correctly.
 
-## Learning Outcomes
-
-* Practical use of BioBlend for Galaxy automation
-* Clean separation of functionality into testable modules
-* Writing unit tests for external API-based systems
-* Building reliable, reproducible Galaxy workflows using Python
-
 ## CI/CD Integration (GitHub Actions)
 
 This project integrates CI/CD using GitHub Actions to automate testing and ensure code quality. The workflow is configured to automatically run unit tests whenever code is pushed or a pull request is opened.
