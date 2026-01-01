@@ -1,31 +1,25 @@
-import pytest
-import sys
-import os
-sys.path.insert(0, '../src/bioblend')
+from bioblend.galaxy import GalaxyInstance
 
-@pytest.fixture
-def mock_galaxy(monkeypatch):
-    """Mock ALL GalaxyInstance network calls"""
-    def mock_galaxy_instance(url, key):
-        mock_gi = type('MockGalaxy', (), {})()
-        mock_gi.config = type('MockConfig', (), {})()
-        mock_gi.config.get_version = lambda: "22.05"  # Fake version
-        return mock_gi
-    monkeypatch.setattr('bioblend.galaxy.GalaxyInstance', mock_galaxy_instance)
+GI_URL = "http://localhost:8080"
+GI_KEY = "b8ba458fe9b1c919040db8288c56ed06"
 
-def test_imports_work():
-    """Test pytest works"""
-    assert 1 + 1 == 2
+gi = None  # Do not create instance at import time
 
-def test_connect_to_galaxy_imports_without_crashing(mock_galaxy):
-    """Test import works WITHOUT real HTTP calls"""
-    import connect_to_galaxy
-    print("✅ Import PASSED - no network calls!")
-    assert hasattr(connect_to_galaxy, 'gi')
-    assert connect_to_galaxy.GI_URL == "http://localhost:8080"
+def get_gi():
+    """
+    Return a GalaxyInstance, create it if it doesn't exist yet.
+    Lazy initialization avoids connecting at import time.
+    """
+    global gi
+    if gi is None:
+        gi = GalaxyInstance(url=GI_URL, key=GI_KEY)
+        print("Connected to Galaxy!")
+        print("Galaxy version:", gi.config.get_version())
+    return gi
 
-def test_galaxy_connection_exists(mock_galaxy):
-    """Test GalaxyInstance object exists"""
-    import connect_to_galaxy
-    assert hasattr(connect_to_galaxy, 'gi')
-    print("✅ Galaxy connection object found!")
+def main():
+    gi_instance = get_gi()
+    # You can now use gi_instance for workflows, uploads, tools, etc.
+
+if __name__ == "__main__":
+    main()

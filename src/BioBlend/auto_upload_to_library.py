@@ -10,7 +10,7 @@ def get_env_variables():
     return {
         "GALAXY_URL": os.getenv("GALAXY_URL"),
         "API_KEY": os.getenv("GALAXY_API_KEY"),
-        "FILE_NAME": os.getenv("FILE_NAME", "biobhistory.fastq"),
+        "FILE_NAME": os.getenv("FILE_NAME", "bioblend_history.fastq"),
         "FILE_TYPE": os.getenv("FILE_TYPE", "fastqsanger"),
         "NEW_LIBRARY_NAME": os.getenv("NEW_LIBRARY_NAME", "MyLibrary"),
         "NEW_LIBRARY_DESC": os.getenv("NEW_LIBRARY_DESC", "Automatically created library via Bioblend")

@@ -48,13 +48,13 @@ def test_imports_work():
 
 def test_view_histories_datasets_main_function(mock_galaxy_histories):
     """Test YOUR main() function executes perfectly"""
-    from view_histories_datasets import main
+    from BioBlend.view_histories_datasets import main
     main()  # YOUR EXACT main() call
     print("✅ YOUR main() function PASSED perfectly!")
 
 def test_histories_and_datasets_flow(mock_galaxy_histories):
     """Test YOUR EXACT histories.get_histories() + show_history()"""
-    from view_histories_datasets import main
+    from BioBlend.view_histories_datasets import main
     gi = type('MockGalaxy', (), {})()
     gi.histories = type('MockHistories', (), {})()
     gi.histories.get_histories = lambda: [{'id': 'hist-001', 'name': 'Test History'}]

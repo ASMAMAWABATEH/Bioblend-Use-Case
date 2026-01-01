@@ -39,7 +39,9 @@ def test_imports_work(mock_galaxy_export_import):
 
 def test_export_import_workflow_top_level(mock_galaxy_export_import):
     """Test YOUR export_import_workflow.py top-level execution"""
-    import export_import_workflow
+    
+    from BioBlend import export_import_workflow
+
     print("✅ export_import_workflow.py imports PERFECT!")
     assert export_import_workflow.WORKFLOW_NAME == "First_workflow"
 

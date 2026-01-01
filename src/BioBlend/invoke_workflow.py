@@ -10,7 +10,7 @@ GALAXY_URL = "http://localhost:8080"
 API_KEY = "b8ba458fe9b1c919040db8288c56ed06"  # Replace with your Galaxy API key
 WORKFLOW_NAME = "First_workflow"  # Use your fixed workflow with available tool
 HISTORY_NAME = "Workflow_Run_History"
-FILE_NAME = "biobhistory.fastq"
+FILE_NAME = "bioblend_history.fastq"
 FILE_TYPE = "fastqsanger"
 
 MAX_WAIT = 300  # seconds

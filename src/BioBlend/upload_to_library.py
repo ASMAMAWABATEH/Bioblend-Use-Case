@@ -8,7 +8,7 @@ import os
 GALAXY_URL = "http://localhost:8080"       # Change if needed
 API_KEY = "b8ba458fe9b1c919040db8288c56ed06"              # Replace with your Galaxy API key
 LIBRARY_ID = "replace_with_actual_library_id"  # Replace with a real library ID
-FILE_NAME = "biobhistory.fastq"            # File to upload
+FILE_NAME = "bioblend_history.fastq"            # File to upload
 FILE_TYPE = "fastqsanger"                  # Galaxy dataset type
 
 # ----------------------------
@@ -26,7 +26,7 @@ if not os.path.exists(FILE_NAME):
 
 # ----------------------------
 print("fore running the script.")
-    exit(1)
+exit(1)
 
 print(f"Uploading '{FILE_NAME}' to library ID {LIBRARY_ID}...")
 # Correct method: first positional arg = library_id, second = file path

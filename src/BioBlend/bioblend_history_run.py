@@ -9,7 +9,7 @@ GALAXY_URL = "http://localhost:8080"          # Local Galaxy
 API_KEY = "b8ba458fe9b1c919040db8288c56ed06"                 # Replace with your API key
 
 HISTORY_NAME = "biobhistory"                  # History name
-INPUT_FILE = "biobhistory.fastq"              # Your local FASTQ filename
+INPUT_FILE = "bioblend_history.fastq"              # Your local FASTQ filename
 FILE_TYPE = "fastqsanger"                     # Standard FASTQ datatype in Galaxy
 TOOL_ID = "cat1"                              # Simple Galaxy tool for testing
 # ----------------------------------------------------------------------

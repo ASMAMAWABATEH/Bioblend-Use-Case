@@ -44,7 +44,7 @@ def test_imports_work():
 
 def test_interactive_upload_top_level(mock_galaxy_library_upload):
     """Test YOUR interactive_upload_to_library.py top-level execution"""
-    import interactive_upload_to_library  # ✅ NOW FULLY MOCKED - NO NETWORK
+    from BioBlend import interactive_upload_to_library  # ✅ NOW FULLY MOCKED - NO NETWORK
     print("✅ interactive_upload_to_library.py imports PERFECT!")
 
 def test_library_upload_pipeline(mock_galaxy_library_upload):
