@@ -43,6 +43,7 @@ Each feature is covered by unit tests to ensure expected behavior and correctnes
 │   ├── view_histories_datasets.py
 │   └── view_workflows.py
 ├── tests/
+│   ├── test_auto_upload_to_library.py
 │   ├── test_bioblend_history_run.py
 │   ├── test_connect_to_galaxy.py
 │   ├── test_create_sample_workflow.py

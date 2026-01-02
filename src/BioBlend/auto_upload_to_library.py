@@ -3,10 +3,9 @@ import os
 from bioblend.galaxy import GalaxyInstance
 from dotenv import load_dotenv
 
-load_dotenv()  # Load .env variables
-
 def get_env_variables():
     """Load environment variables with defaults"""
+    load_dotenv() # Ensure .env is loaded
     return {
         "GALAXY_URL": os.getenv("GALAXY_URL"),
         "API_KEY": os.getenv("GALAXY_API_KEY"),
