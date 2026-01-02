@@ -1,48 +1,34 @@
+# BioBlend/view_data_library.py
 from bioblend.galaxy import GalaxyInstance
 
-# --------------------------------------------------------------
-# Configuration
-# --------------------------------------------------------------
 GALAXY_URL = "http://localhost:8080"
 API_KEY = "b8ba458fe9b1c919040db8288c56ed06"
-# --------------------------------------------------------------
+
+def get_galaxy_instance(url=GALAXY_URL, key=API_KEY):
+    """Return a GalaxyInstance"""
+    return GalaxyInstance(url=url, key=key)
+
+def list_libraries(gi):
+    """Return structured list of data libraries"""
+    libraries = gi.libraries.get_libraries()
+    result = []
+    for lib in libraries:
+        lib_details = gi.libraries.show_library(lib['id'])
+        result.append({
+            'id': lib['id'],
+            'name': lib['name'],
+            'description': lib_details.get('description', ''),
+            'datasets': lib_details.get('datasets', [])
+        })
+    return result
 
 def main():
-    gi = GalaxyInstance(GALAXY_URL, API_KEY)
-
-    print("Fetching histories...")
-    histories = gi.histories.get_histories()
-
-    if not histories:
-        print("No histories found.")
-        return
-
-    print(f"Found {len(histories)} histories.\n")
-
-    for h in histories:
-        history_id = h["id"]
-        history_name = h["name"]
-
-        print(f"History: {history_name}")
-        print(f"ID: {history_id}")
-
-        # Fetch datasets inside this history
-        datasets = gi.histories.show_history(history_id, contents=True)
-
-        if not datasets:
-            print("  No datasets in this history.\n")
-            continue
-
-        print("  Datasets:")
-        for d in datasets:
-            name = d["name"]
-            ds_id = d["id"]
-            state = d["state"]
-            dtype = d["history_content_type"]
-
-            print(f"    - {name} | {ds_id} | state={state} | type={dtype}")
-        print("")  # blank line for spacing
-
+    gi = get_galaxy_instance()
+    libraries = list_libraries(gi)
+    for lib in libraries:
+        print(f"Library: {lib['name']} | Description: {lib['description']}")
+        print(f"Datasets: {[d['name'] for d in lib['datasets']]}")
+        print("-" * 40)
 
 if __name__ == "__main__":
     main()

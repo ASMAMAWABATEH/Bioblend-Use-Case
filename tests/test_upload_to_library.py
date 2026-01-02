@@ -1,28 +1,42 @@
 import pytest
-import sys
-import os
-sys.path.insert(0, '..')
+from unittest.mock import Mock, patch
+from BioBlend import upload_to_library
 
-# Test functions - NO top-level imports that crash
-@pytest.fixture
-def mock_env(monkeypatch, tmp_path):
-    fake_file = tmp_path / "biobhistory.fastq"
-    fake_file.write_text("@SEQ1\nFAKE DATA")
-    monkeypatch.setenv("GALAXY_URL", "http://fake-galaxy")
-    monkeypatch.setenv("API_KEY", "fake-key")
-    monkeypatch.setenv("FILE_NAME", str(fake_file))
-    monkeypatch.setenv("LIBRARY_ID", "fake-lib-123")
-    return str(fake_file)
+class TestUploadToLibrary:
+    @pytest.fixture
+    def mock_gi(self):
+        gi = Mock()
+        gi.libraries.get_libraries.return_value = [
+            {"id": "lib-001", "name": "MyLibrary"}
+        ]
+        gi.libraries.upload_file_from_local_path.return_value = [{"id": "ds-001"}]
+        return gi
 
-def test_imports_work():
-    """Basic test - proves pytest works"""
-    assert 1 + 1 == 2
+    def test_get_galaxy_instance(self):
+        """GalaxyInstance is called with correct URL and key"""
+        with patch("BioBlend.upload_to_library.GalaxyInstance") as mock:
+            upload_to_library.get_galaxy_instance()
+            mock.assert_called_once_with(
+                url="http://localhost:8080",
+                key="b8ba458fe9b1c919040db8288c56ed06"
+            )
 
-def test_file_exists(mock_env):
-    """Test file creation works"""
-    assert os.path.exists(mock_env)
+    def test_select_library_existing(self, mock_gi):
+        """Selects the correct library if exists"""
+        lib_id = upload_to_library.select_library(mock_gi, "MyLibrary")
+        assert lib_id == "lib-001"
 
-def test_env_vars(mock_env):
-    """Test environment setup"""
-    import os
-    assert os.getenv("GALAXY_URL") == "http://fake-galaxy"
+    def test_select_library_not_found(self, mock_gi):
+        """Returns None if library does not exist"""
+        lib_id = upload_to_library.select_library(mock_gi, "NonExistent")
+        assert lib_id is None
+
+    def test_upload_file_to_library(self, mock_gi):
+        """Uploads file and returns dataset ID"""
+        ds_id = upload_to_library.upload_file_to_library(
+            mock_gi, "lib-001", "bioblend_history.fastq"
+        )
+        assert ds_id == "ds-001"
+        mock_gi.libraries.upload_file_from_local_path.assert_called_once_with(
+            "lib-001", "bioblend_history.fastq", "fastqsanger"
+        )

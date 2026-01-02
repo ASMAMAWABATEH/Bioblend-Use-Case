@@ -1,26 +1,29 @@
-#!/usr/bin/env python3
+# BioBlend/auto_upload_to_library.py
 import os
 from bioblend.galaxy import GalaxyInstance
 from dotenv import load_dotenv
 
 def get_env_variables():
     """Load environment variables with defaults"""
-    load_dotenv() # Ensure .env is loaded
+    load_dotenv()
     return {
-        "GALAXY_URL": os.getenv("GALAXY_URL"),
-        "API_KEY": os.getenv("GALAXY_API_KEY"),
+        "GALAXY_URL": os.getenv("GALAXY_URL", "http://localhost:8080"),
+        "API_KEY": os.getenv("GALAXY_API_KEY", "b8ba458fe9b1c919040db8288c56ed06"),
         "FILE_NAME": os.getenv("FILE_NAME", "bioblend_history.fastq"),
         "FILE_TYPE": os.getenv("FILE_TYPE", "fastqsanger"),
         "NEW_LIBRARY_NAME": os.getenv("NEW_LIBRARY_NAME", "MyLibrary"),
-        "NEW_LIBRARY_DESC": os.getenv("NEW_LIBRARY_DESC", "Automatically created library via Bioblend")
+        "NEW_LIBRARY_DESC": os.getenv(
+            "NEW_LIBRARY_DESC",
+            "Automatically created library via Bioblend"
+        )
     }
 
 def connect_galaxy(url, key):
-    """Connect to Galaxy instance"""
+    """Return a GalaxyInstance"""
     return GalaxyInstance(url=url, key=key)
 
 def select_or_create_library(gi, library_name, library_desc):
-    """Select existing library or create new one"""
+    """Select existing library or create a new one"""
     libraries = gi.libraries.get_libraries()
     if not libraries:
         new_lib = gi.libraries.create_library(name=library_name, description=library_desc)
@@ -28,11 +31,11 @@ def select_or_create_library(gi, library_name, library_desc):
     return libraries[0]["id"]
 
 def upload_file(gi, library_id, file_name, file_type):
-    """Upload file to library"""
+    """Upload a file to the specified library"""
     return gi.libraries.upload_file_from_local_path(library_id, file_name, file_type)[0]["id"]
 
 def show_library_contents(gi, library_id):
-    """Show library contents"""
+    """Return a structured list of library contents"""
     contents = gi.libraries.show_library(library_id, contents=True)
     return [(item["name"], item["type"], item["id"]) for item in contents]
 

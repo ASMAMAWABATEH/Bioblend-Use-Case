@@ -1,85 +1,111 @@
-from bioblend.galaxy import GalaxyInstance
-import time
-import sys
+import pytest
+from unittest.mock import Mock, patch
+import builtins
 
-# ----------------------------------------------------------------------
-# Configuration
-# ----------------------------------------------------------------------
-GALAXY_URL = "http://localhost:8080"          # Local Galaxy
-API_KEY = "b8ba458fe9b1c919040db8288c56ed06"                 # Replace with your API key
-
-HISTORY_NAME = "biobhistory"                  # History name
-INPUT_FILE = "bioblend_history.fastq"              # Your local FASTQ filename
-FILE_TYPE = "fastqsanger"                     # Standard FASTQ datatype in Galaxy
-TOOL_ID = "cat1"                              # Simple Galaxy tool for testing
-# ----------------------------------------------------------------------
+# Import the refactored module
+from BioBlend import bioblend_history_run as bhr
 
 
-def wait_for_job(gi, job_id, timeout=600, interval=5):
-    """
-    Poll job state until it finishes or times out.
-    """
-    start = time.time()
-    while True:
-        job = gi.jobs.show_job(job_id)
-        state = job["state"]
+@pytest.fixture
+def mock_gi():
+    """Return a mocked GalaxyInstance with jobs, histories, and tools"""
+    gi = Mock()
 
-        if state in ["ok", "error"]:
-            return state
+    # Mock histories
+    gi.histories.create_history.return_value = {"id": "history-001"}
+    gi.histories.show_history.return_value = [
+        {"name": "dataset1", "id": "dataset-001", "state": "ok"},
+        {"name": "dataset2", "id": "dataset-002", "state": "running"}
+    ]
 
-        if (time.time() - start) > timeout:
-            return "timeout"
+    # Mock file upload
+    gi.tools.upload_file.return_value = {
+        "outputs": [{"id": "dataset-001"}]
+    }
 
-        time.sleep(interval)
+    # Mock running tool
+    gi.tools.run_tool.return_value = {
+        "jobs": [{"id": "job-001"}]
+    }
+
+    # Mock job polling
+    gi.jobs.show_job.return_value = {"state": "ok"}
+
+    return gi
 
 
-def main():
-    print("Connecting to Galaxy...")
-    gi = GalaxyInstance(url=GALAXY_URL, key=API_KEY)
-
-    # Create a new history
-    print(f"Creating history: {HISTORY_NAME}")
-    history = gi.histories.create_history(HISTORY_NAME)
-    history_id = history["id"]
-
-    # Upload FASTQ file
-    print(f"Uploading file '{INPUT_FILE}' as FASTQ...")
-    upload = gi.tools.upload_file(
-        INPUT_FILE,
-        history_id,
-        file_type=FILE_TYPE
+def test_get_galaxy_instance():
+    """Test GalaxyInstance creation"""
+    with patch("BioBlend.bioblend_history_run.GalaxyInstance") as mock:
+     bhr.get_galaxy_instance()
+     mock.assert_called_once_with(
+        url=bhr.GALAXY_URL,
+        key=bhr.API_KEY
     )
-    dataset_id = upload["outputs"][0]["id"]
 
-    print(f"File uploaded with dataset ID: {dataset_id}")
 
-    # Run the test tool (cat1)
-    print("Running tool: cat1")
-    run = gi.tools.run_tool(
-        history_id=history_id,
-        tool_id=TOOL_ID,
-        tool_inputs={"input1": {"src": "hda", "id": dataset_id}}
+
+def test_create_history(mock_gi):
+    """Test creating a history"""
+    history_id = bhr.create_history(mock_gi, "TestHistory")
+    assert history_id == "history-001"
+    mock_gi.histories.create_history.assert_called_once_with("TestHistory")
+
+
+def test_upload_file_to_history(mock_gi):
+    """Test uploading a file returns dataset ID"""
+    dataset_id = bhr.upload_file_to_history(mock_gi, "file.fastq", "history-001")
+    assert dataset_id == "dataset-001"
+    mock_gi.tools.upload_file.assert_called_once_with(
+        "file.fastq",
+        "history-001",
+        file_type=bhr.FILE_TYPE
     )
-    job_id = run["jobs"][0]["id"]
-
-    # Wait for completion
-    print(f"Waiting for job {job_id} to finish...")
-    state = wait_for_job(gi, job_id)
-
-    if state != "ok":
-        print(f"Job finished with state: {state}")
-        sys.exit(1)
-
-    print("Job completed successfully.")
-
-    # Show outputs
-    print("History outputs:")
-    outputs = gi.histories.show_history(history_id, contents=True)
-    for item in outputs:
-        print(f"- {item['name']} | {item['id']} | {item['state']}")
-
-    print("Done.")
 
 
-if __name__ == "__main__":
-    main()
+def test_run_tool(mock_gi):
+    """Test running a tool returns job ID"""
+    job_id = bhr.run_tool(mock_gi, "history-001", "cat1", "dataset-001")
+    assert job_id == "job-001"
+    mock_gi.tools.run_tool.assert_called_once_with(
+        history_id="history-001",
+        tool_id="cat1",
+        tool_inputs={"input1": {"src": "hda", "id": "dataset-001"}}
+    )
+
+
+def test_wait_for_job(mock_gi):
+    """Test job polling returns 'ok'"""
+    state = bhr.wait_for_job(mock_gi, "job-001")
+    assert state == "ok"
+    mock_gi.jobs.show_job.assert_called()
+
+
+def test_show_history_contents(mock_gi):
+    """Test history contents listing"""
+    contents = bhr.show_history_contents(mock_gi, "history-001")
+    assert len(contents) == 2
+    assert contents[0]["name"] == "dataset1"
+    assert contents[1]["state"] == "running"
+
+
+def test_run_main(monkeypatch, mock_gi):
+    """Test main() workflow with mocked GalaxyInstance"""
+    # Patch GalaxyInstance creation to return mock_gi
+    monkeypatch.setattr(bhr, "get_galaxy_instance", lambda: mock_gi)
+
+    # Patch sys.exit to prevent exiting
+    monkeypatch.setattr("sys.exit", lambda code=None: None)
+
+    # Patch INPUT_FILE to a dummy filename
+    monkeypatch.setattr(bhr, "INPUT_FILE", "dummy.fastq")
+
+    # Run main
+    bhr.main()
+
+    # Ensure all key methods were called
+    mock_gi.histories.create_history.assert_called_once()
+    mock_gi.tools.upload_file.assert_called_once()
+    mock_gi.tools.run_tool.assert_called_once()
+    mock_gi.jobs.show_job.assert_called()
+    mock_gi.histories.show_history.assert_called_once()

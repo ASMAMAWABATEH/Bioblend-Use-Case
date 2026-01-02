@@ -1,33 +1,44 @@
 import pytest
-import os
-import sys
-sys.path.insert(0, os.path.abspath('src'))
+from unittest.mock import Mock
+from BioBlend import invoke_workflow as iw
 
-def test_imports_work():
-    """Basic pytest verification"""
-    assert 1 + 1 == 2
+@pytest.fixture
+def mock_gi():
+    gi = Mock()
+    # Mock workflow listing
+    gi.workflows.get_workflows.return_value = [{"id": "wf-001", "name": "TestWorkflow"}]
+    # Mock workflow invocation
+    gi.workflows.invoke_workflow.return_value = {"id": "inv-001"}
+    # Mock workflow status polling
+    gi.workflows.show_invocation.return_value = {"state": "ok"}
+    return gi
 
-def test_file_exists_and_readable():
-    """Test invoke_workflow.py file exists"""
-    assert os.path.exists('src/BioBlend/invoke_workflow.py')
-    assert os.path.getsize('src/BioBlend/invoke_workflow.py') > 1000
-    print("✅ invoke_workflow.py file exists & readable!")
+def test_find_workflow(mock_gi):
+    """Test finding a workflow by name."""
+    wf_id = iw.find_workflow(mock_gi, "TestWorkflow")
+    assert wf_id == "wf-001"
 
-def test_project_structure_correct():
-    """Test your professional project structure"""
-    assert os.path.exists('tests/__init__.py')
-    assert os.path.exists('src/BioBlend/invoke_workflow.py')
-    assert os.path.exists('src/BioBlend/connect_to_galaxy.py')
-    assert os.path.exists('data/bioblend_history.fastq')
-    fastq_file = os.path.join('data', 'bioblend_history.fastq')
-    assert os.path.exists(fastq_file)
-    print("✅ Professional BioBlend project structure!")
+    # Test workflow not found
+    wf_id_none = iw.find_workflow(mock_gi, "NonexistentWorkflow")
+    assert wf_id_none is None
 
-def test_configuration_via_string_parsing():
-    """Test your constants by reading file (no import needed)"""
-    with open('src/BioBlend/invoke_workflow.py', 'r') as f:
-        content = f.read()
-        assert 'GALAXY_URL = "http://localhost:8080"' in content
-        assert 'WORKFLOW_NAME = "First_workflow"' in content
-        assert 'HISTORY_NAME = "Workflow_Run_History"' in content
-    print("✅ Found GALAXY_URL, WORKFLOW_NAME, HISTORY_NAME!")
+def test_invoke_workflow(mock_gi):
+    """Test invoking a workflow and checking state."""
+    inv_id, state = iw.invoke_workflow(
+        mock_gi,
+        workflow_id="wf-001",
+        history_id="hist-001",
+        dataset_id="ds-001",
+        max_wait=1,   # Short timeout for test
+        interval=0    # No sleep for test speed
+    )
+
+    # Assertions
+    assert inv_id == "inv-001"
+    assert state == "ok"
+    mock_gi.workflows.invoke_workflow.assert_called_once_with(
+        workflow_id="wf-001",
+        history_id="hist-001",
+        inputs={"0": {"id": "ds-001"}}
+    )
+    mock_gi.workflows.show_invocation.assert_called()

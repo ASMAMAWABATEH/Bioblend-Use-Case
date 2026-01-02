@@ -1,74 +1,70 @@
+# tests/test_export_import_workflow.py
 import pytest
-import sys
+from unittest.mock import patch, MagicMock
 import os
-sys.path.insert(0, '.')
+import json
+import tempfile
 
-@pytest.fixture
-def mock_galaxy_export_import(monkeypatch, tmp_path):
-    """Mock YOUR EXACT export_import_workflow.py methods + file I/O"""
-    def mock_galaxy_instance(url, key):
-        mock_gi = type('MockGalaxy', (), {})()
-        
-        # Mock YOUR workflows.get_workflows()
-        mock_gi.workflows = type('MockWorkflows', (), {})()
-        mock_gi.workflows.get_workflows = lambda: [
-            {'id': 'wf-123', 'name': 'First_workflow'}
-        ]
-        
-        # Mock YOUR workflows.export_workflow_dict()
-        mock_gi.workflows.export_workflow_dict = lambda workflow_id: {
-            'name': 'First_workflow',
-            'steps': {'0': {'tool_id': 'cat1'}}
-        }
-        
-        # Mock YOUR workflows.import_workflow_dict()
-        mock_gi.workflows.import_workflow_dict = lambda workflow_json: {
-            'id': 'wf-456', 
-            'name': 'First_workflow_imported'
-        }
-        return mock_gi
-    
-    monkeypatch.setattr('bioblend.galaxy.GalaxyInstance', mock_galaxy_instance)
-    monkeypatch.setattr('sys.exit', lambda code: None)
-    monkeypatch.setattr('builtins.print', lambda *args: None)
-    return tmp_path
+import BioBlend.export_import_workflow as eiw
 
-def test_imports_work(mock_galaxy_export_import):
-    """Test pytest works for export_import_workflow"""
-    assert 1 + 1 == 2
+def test_get_galaxy_instance():
+    """GalaxyInstance should be called with correct URL and key"""
+    # Patch at the place it's used inside export_import_workflow
+    with patch("BioBlend.export_import_workflow.GalaxyInstance") as mock_gi:
+        eiw.get_galaxy_instance()
+        mock_gi.assert_called_once_with(url=eiw.GALAXY_URL, key=eiw.API_KEY)
 
-def test_export_import_workflow_top_level(mock_galaxy_export_import):
-    """Test YOUR export_import_workflow.py top-level execution"""
-    
-    from BioBlend import export_import_workflow
+# ----------------------------
+# TEST: export_workflow
+# ----------------------------
+def test_export_workflow(tmp_path):
+    """Workflow should be exported to a JSON file"""
+    mock_gi = MagicMock()
+    workflow_dict = {"name": "TestWorkflow", "steps": {}}
+    mock_gi.workflows.export_workflow_dict.return_value = workflow_dict
 
-    print("✅ export_import_workflow.py imports PERFECT!")
-    assert export_import_workflow.WORKFLOW_NAME == "First_workflow"
+    exported_file = eiw.export_workflow(mock_gi, workflow_id="wf-001", output_dir=tmp_path)
 
-def test_complete_export_import_pipeline(mock_galaxy_export_import):
-    """Test YOUR EXACT export→file→import flow"""
-    gi = type('MockGI', (), {})()
-    gi.workflows = type('MockWorkflows', (), {})()
-    
-    # Mock YOUR workflow lookup
-    gi.workflows.get_workflows = lambda: [{'id': 'wf-123', 'name': 'First_workflow'}]
-    
-    # YOUR export_workflow_dict()
-    gi.workflows.export_workflow_dict = lambda wf_id: {
-        'name': 'First_workflow',
-        'steps': {'0': {'tool_id': 'cat1'}}
-    }
-    
-    # Simulate YOUR file export/import
-    workflow_dict = gi.workflows.export_workflow_dict('wf-123')
-    assert workflow_dict['name'] == 'First_workflow'
-    
-    # YOUR import_workflow_dict()
-    gi.workflows.import_workflow_dict = lambda workflow_json: {
-        'id': 'wf-456', 
-        'name': 'First_workflow_imported'
-    }
-    imported = gi.workflows.import_workflow_dict(workflow_dict)
-    assert imported['id'] == 'wf-456'
-    
-    print("✅ Export→file→import pipeline PERFECT!")
+    # Check the file exists
+    assert os.path.exists(exported_file)
+    # Check content
+    with open(exported_file, "r") as f:
+        data = json.load(f)
+    assert data == workflow_dict
+
+# ----------------------------
+# TEST: import_workflow
+# ----------------------------
+def test_import_workflow(tmp_path):
+    """Workflow should be imported from JSON file"""
+    workflow_dict = {"name": "TestWorkflow", "steps": {}}
+    workflow_file = tmp_path / "workflow.ga"
+    with open(workflow_file, "w") as f:
+        json.dump(workflow_dict, f)
+
+    mock_gi = MagicMock()
+    mock_gi.workflows.import_workflow_dict.return_value = {"id": "wf-001"}
+
+    workflow_id = eiw.import_workflow(mock_gi, str(workflow_file))
+    assert workflow_id == "wf-001"
+    mock_gi.workflows.import_workflow_dict.assert_called_once_with(workflow_dict)
+
+# ----------------------------
+# TEST: import_workflow FileNotFoundError
+# ----------------------------
+def test_import_workflow_file_not_found():
+    """Importing a non-existent file should raise FileNotFoundError"""
+    mock_gi = MagicMock()
+    with pytest.raises(FileNotFoundError):
+        eiw.import_workflow(mock_gi, "non_existent_file.ga")
+
+# ----------------------------
+# TEST: show_workflows
+# ----------------------------
+def test_show_workflows():
+    """Should return workflows from Galaxy"""
+    mock_gi = MagicMock()
+    mock_gi.workflows.get_workflows.return_value = [{"name": "WF1", "id": "wf-001"}]
+
+    workflows = eiw.show_workflows(mock_gi)
+    assert workflows == [{"name": "WF1", "id": "wf-001"}]

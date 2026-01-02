@@ -1,68 +1,44 @@
+# tests/test_view_workflows.py
 import pytest
-import sys
-import os
-sys.path.insert(0, os.path.abspath('src'))
+from unittest.mock import Mock, patch
+from BioBlend import view_workflows
 
+class TestViewWorkflows:
 
-@pytest.fixture
-def mock_galaxy_view_workflows(monkeypatch):
-    """Mock YOUR EXACT view_workflows.py methods"""
-    def mock_galaxy_instance(url, key):
-        mock_gi = type('MockGalaxy', (), {})()
-        
-        # Mock YOUR workflows.get_workflows()
-        mock_gi.workflows = type('MockWorkflows', (), {})()
-        mock_gi.workflows.get_workflows = lambda: [
-            {
-                'id': 'wf-001', 
-                'name': 'Quality Control', 
-                'published': True, 
-                'owner': 'admin'
-            },
-            {
-                'id': 'wf-002', 
-                'name': 'RNA-Seq Analysis', 
-                'published': False, 
-                'owner': 'user1'
-            }
+    @pytest.fixture
+    def mock_gi(self):
+        """Fixture for a mocked GalaxyInstance"""
+        gi = Mock()
+        gi.workflows.get_workflows.return_value = [
+            {'id': 'wf-001', 'name': 'Test Workflow', 'published': True}
         ]
-        
-        # Mock YOUR workflows.show_workflow() with YOUR exact steps structure
-        mock_gi.workflows.show_workflow = lambda wf_id: {
-            'steps': {
-                '1': {'tool_id': 'fastqc', 'label': 'input_fastq'},
-                '2': {'tool_id': 'cutadapt', 'label': 'trimmed'}
-            }
+        gi.workflows.show_workflow.return_value = {
+            'steps': {'1': {'tool_id': 'cat1', 'label': 'test'}}
         }
-        return mock_gi
-    
-    monkeypatch.setattr('bioblend.galaxy.GalaxyInstance', mock_galaxy_instance)
-    monkeypatch.setattr('sys.exit', lambda code: None)
-    monkeypatch.setattr('builtins.print', lambda *args: None)
+        return gi
 
-def test_imports_work():
-    """Test pytest works for YOUR view_workflows"""
-    assert 1 + 1 == 2
+    def test_get_galaxy_instance(self):
+        """Test that GalaxyInstance is created with correct parameters"""
+        # Patch where GalaxyInstance is imported, not where it's defined
+        with patch('BioBlend.view_workflows.GalaxyInstance') as mock:
+            view_workflows.get_galaxy_instance()
+            mock.assert_called_once_with(
+                url="http://localhost:8080",
+                key="b8ba458fe9b1c919040db8288c56ed06"
+            )
 
-def test_view_workflows_full_execution(mock_galaxy_view_workflows):
-    """Test YOUR EXACT top-level code: get_workflows() + show_workflow()"""
-    from BioBlend import view_workflows
-    print("✅ YOUR view_workflows.py FULL execution PASSED!")
-    assert hasattr(view_workflows, 'gi')
-    assert view_workflows.GALAXY_URL == "http://localhost:8080"
+    def test_list_workflows(self, mock_gi):
+        """Test listing of workflows"""
+        result = view_workflows.list_workflows(mock_gi)
+        assert len(result) == 1
+        assert result[0]['name'] == 'Test Workflow'
+        assert result[0]['published'] is True
+        assert 'steps' in result[0]
+        mock_gi.workflows.get_workflows.assert_called_once()
+        mock_gi.workflows.show_workflow.assert_called_once_with('wf-001')
 
-def test_workflow_list_and_step_details(mock_galaxy_view_workflows):
-    """Test YOUR workflows loop + wf_details.get('steps')"""
-    from BioBlend import view_workflows
-    workflows = view_workflows.gi.workflows.get_workflows()
-    assert len(workflows) == 2
-    assert workflows[0]['name'] == 'Quality Control'
-    assert workflows[0].get('published', False) == True  # YOUR exact .get()
-    
-    # Test YOUR show_workflow + steps.items() loop
-    details = view_workflows.gi.workflows.show_workflow('wf-001')
-    steps = details.get('steps', {})  # YOUR EXACT line
-    assert len(steps) == 2
-    assert steps['1'].get('tool_id') == 'fastqc'  # YOUR EXACT structure
-    assert steps['1'].get('label') == 'input_fastq'
-    print("✅ YOUR workflow details + steps PERFECT!")
+    def test_list_workflows_empty(self, mock_gi):
+        """Test handling of empty workflow list"""
+        mock_gi.workflows.get_workflows.return_value = []
+        result = view_workflows.list_workflows(mock_gi)
+        assert result == []

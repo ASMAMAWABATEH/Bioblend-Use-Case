@@ -1,73 +1,56 @@
 import pytest
-import sys
-import os
-sys.path.insert(0, '.')
+from unittest.mock import Mock, patch
+import BioBlend.view_data_library as view_data_library
 
-@pytest.fixture
-def mock_galaxy_histories(monkeypatch):
-    """Mock YOUR EXACT view_histories_datasets.py methods"""
-    def mock_galaxy_instance(url, key):
-        mock_gi = type('MockGalaxy', (), {})()
-        
-        # Mock YOUR gi.histories.get_histories()
-        mock_gi.histories = type('MockHistories', (), {})()
-        mock_gi.histories.get_histories = lambda: [
-            {
-                'id': 'hist-001', 
-                'name': 'Workflow_Run_History'
-            },
-            {
-                'id': 'hist-002', 
-                'name': 'Quality Control Results'
-            }
+class TestViewDataLibrary:
+
+    @pytest.fixture
+    def mock_gi(self):
+        """Mock GalaxyInstance with libraries and datasets"""
+        gi = Mock()
+
+        # Mock get_libraries to return a single library
+        gi.libraries.get_libraries.return_value = [
+            {"id": "lib-001", "name": "Test Library"}
         ]
+
+        # Mock show_library to return description and datasets
+        gi.libraries.show_library.return_value = {
+            "description": "Test description",
+            "datasets": [
+                {"id": "ds-001", "name": "file1.fastq"},
+                {"id": "ds-002", "name": "file2.fastq"}
+            ]
+        }
+
+        return gi
+
+    def test_list_libraries(self, mock_gi):
+        """Test listing libraries with datasets"""
+        result = view_data_library.list_libraries(mock_gi)
         
-        # Mock YOUR gi.histories.show_history(history_id, contents=True)
-        mock_gi.histories.show_history = lambda history_id, contents=True: [
-            {
-                'name': 'biobhistory.fastq',
-                'id': 'ds-001',
-                'state': 'ok',
-                'history_content_type': 'dataset'
-            },
-            {
-                'name': 'trimmed_reads.fastq',
-                'id': 'ds-002', 
-                'state': 'running',
-                'history_content_type': 'dataset'
-            }
-        ]
-        return mock_gi
-    
-    monkeypatch.setattr('bioblend.galaxy.GalaxyInstance', mock_galaxy_instance)
-    monkeypatch.setattr('builtins.print', lambda *args: None)
+        assert len(result) == 1
+        lib = result[0]
+        assert lib["name"] == "Test Library"
+        assert lib["description"] == "Test description"
+        assert len(lib["datasets"]) == 2
+        assert lib["datasets"][0]["name"] == "file1.fastq"
+        assert lib["datasets"][1]["name"] == "file2.fastq"
 
-def test_imports_work():
-    """Test pytest works for view_histories_datasets"""
-    assert 1 + 1 == 2
+    def test_list_libraries_empty(self):
+        """Test empty library list is handled correctly"""
+        mock_gi = Mock()
+        mock_gi.libraries.get_libraries.return_value = []
 
-def test_view_histories_datasets_main_function(mock_galaxy_histories):
-    """Test YOUR main() function executes perfectly"""
-    from BioBlend.view_histories_datasets import main
-    main()  # YOUR EXACT main() call
-    print("✅ YOUR main() function PASSED perfectly!")
+        result = view_data_library.list_libraries(mock_gi)
+        assert result == []
 
-def test_histories_and_datasets_flow(mock_galaxy_histories):
-    """Test YOUR EXACT histories.get_histories() + show_history()"""
-    from BioBlend.view_histories_datasets import main
-    gi = type('MockGalaxy', (), {})()
-    gi.histories = type('MockHistories', (), {})()
-    gi.histories.get_histories = lambda: [{'id': 'hist-001', 'name': 'Test History'}]
-    gi.histories.show_history = lambda hid, contents=True: [
-        {'name': 'test.fastq', 'id': 'ds-001', 'state': 'ok', 'history_content_type': 'dataset'}
-    ]
-    
-    # Test YOUR exact data structure
-    histories = gi.histories.get_histories()
-    assert len(histories) == 1
-    assert histories[0]['name'] == 'Test History'
-    
-    datasets = gi.histories.show_history('hist-001', contents=True)
-    assert len(datasets) == 1
-    assert datasets[0]['history_content_type'] == 'dataset'  # YOUR exact field
-    print("✅ Histories + datasets contents=True PERFECT!")
+    def test_get_galaxy_instance(self):
+        """GalaxyInstance should be created with correct URL and key"""
+        # PATCH THE LOCAL MODULE PATH, NOT bioblend.galaxy
+        with patch("BioBlend.view_data_library.GalaxyInstance") as mock_gi_class:
+            gi = view_data_library.get_galaxy_instance()
+            mock_gi_class.assert_called_once_with(
+                url=view_data_library.GALAXY_URL,
+                key=view_data_library.API_KEY
+            )

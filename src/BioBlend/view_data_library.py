@@ -1,47 +1,43 @@
-#!/usr/bin/env python3
 from bioblend.galaxy import GalaxyInstance
-import os
 
-# ----------------------------
-# CONFIGURATION
-# ----------------------------
-GALAXY_URL = "http://localhost:8080"  # Change if needed
-API_KEY = "b8ba458fe9b1c919040db8288c56ed06"          # Replace with your Galaxy API key
-DOWNLOAD_DATASETS = False              # Set True if you want to download datasets
+GALAXY_URL = "http://localhost:8080"
+API_KEY = "b8ba458fe9b1c919040db8288c56ed06"
 
-# ----------------------------
-# CONNECT TO GALAXY
-# ----------------------------
-gi = GalaxyInstance(url=GALAXY_URL, key=API_KEY)
-print("Connected to Galaxy.")
+def get_galaxy_instance(url=GALAXY_URL, key=API_KEY):
+    """Create and return a Galaxy instance"""
+    return GalaxyInstance(url=url, key=key)
 
-# ----------------------------
-# LIST DATA LIBRARIES
-# ----------------------------
-libraries = gi.libraries.get_libraries()
-print(f"\nFound {len(libraries)} data libraries:\n")
+def list_libraries(gi):
+    """Return Galaxy data libraries with their datasets."""
+    libraries = gi.libraries.get_libraries()
+    results = []
 
-for lib in libraries:
-    print(f"- {lib['name']} | ID: {lib['id']} | Description: {lib.get('description', 'No description')}")
+    for lib in libraries:
+        lib_details = gi.libraries.show_library(lib["id"])
 
-# ----------------------------
-# VIEW CONTENTS OF EACH LIBRARY
-# ----------------------------
-for lib in libraries:
-    print(f"\nContents of library: {lib['name']} (ID: {lib['id']})")
-    contents = gi.libraries.get_library_contents(lib['id'])
-    if not contents:
-        print("  (Library is empty)")
-    for item in contents:
-        print(f"  - {item['name']} | Type: {item['type']} | ID: {item['id']}")
+        results.append({
+            "id": lib["id"],
+            "name": lib["name"],
+            "description": lib_details.get("description", ""),
+            "datasets": lib_details.get("datasets", []),
+        })
 
-        # Optional: download datasets
-        if DOWNLOAD_DATASETS and item['type'] == "file":
-            file_path = gi.libraries.download_dataset(
-                item['id'],
-                file_path=".",  # current directory
-                use_default_filename=True
-            )
-            print(f"    -> Dataset downloaded to: {file_path}")
+    return results
 
-print("\nDone ✅ Data libraries viewed successfully!")
+
+def main():
+    gi = get_galaxy_instance()
+    libraries = list_libraries(gi)
+
+    for lib in libraries:
+        print(f"Library: {lib['name']} | Description: {lib['description']}")
+        if lib["contents"]:
+            print("  Contents:")
+            for item in lib["contents"]:
+                print(f"    - {item['name']} | Type: {item['type']} | ID: {item['id']}")
+        else:
+            print("  (No contents)")
+        print("-" * 40)
+
+if __name__ == "__main__":
+    main()
