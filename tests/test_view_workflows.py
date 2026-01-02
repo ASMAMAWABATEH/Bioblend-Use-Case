@@ -1,7 +1,8 @@
 import pytest
 import sys
 import os
-sys.path.insert(0, '.')
+sys.path.insert(0, os.path.abspath('src'))
+
 
 @pytest.fixture
 def mock_galaxy_view_workflows(monkeypatch):
@@ -45,14 +46,14 @@ def test_imports_work():
 
 def test_view_workflows_full_execution(mock_galaxy_view_workflows):
     """Test YOUR EXACT top-level code: get_workflows() + show_workflow()"""
-    import view_workflows
+    from BioBlend import view_workflows
     print("✅ YOUR view_workflows.py FULL execution PASSED!")
     assert hasattr(view_workflows, 'gi')
     assert view_workflows.GALAXY_URL == "http://localhost:8080"
 
 def test_workflow_list_and_step_details(mock_galaxy_view_workflows):
     """Test YOUR workflows loop + wf_details.get('steps')"""
-    import view_workflows
+    from BioBlend import view_workflows
     workflows = view_workflows.gi.workflows.get_workflows()
     assert len(workflows) == 2
     assert workflows[0]['name'] == 'Quality Control'

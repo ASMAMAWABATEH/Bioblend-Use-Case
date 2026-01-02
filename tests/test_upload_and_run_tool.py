@@ -6,8 +6,9 @@ sys.path.insert(0, '.')
 @pytest.fixture
 def mock_galaxy_upload_run(monkeypatch, tmp_path):
     """Mock ALL 8 calls in upload_and_run_tool.py"""
-    fake_file = tmp_path / "biobhistory.fastq"
+    fake_file = tmp_path / "bioblend_history.fastq"
     fake_file.write_text("@SEQ1\nFAKE DATA")
+  
     
     def mock_galaxy_instance(url, key):
         mock_gi = type('MockGalaxy', (), {})()
@@ -42,7 +43,7 @@ def mock_galaxy_upload_run(monkeypatch, tmp_path):
         
         # 7. Mock histories.show_history(contents=True)
         mock_gi.histories.show_history = lambda history_id, contents=True: [
-            {'name': 'biobhistory.fastq', 'id': 'ds-123', 'state': 'ok', 'type': 'dataset'}
+            {'name': 'bioblend_history.fastq', 'id': 'ds-123', 'state': 'ok', 'type': 'dataset'}
         ]
         
         return mock_gi
@@ -60,7 +61,7 @@ def test_imports_work():
 
 def test_upload_and_run_tool_full_execution(mock_galaxy_upload_run):
     """Test YOUR COMPLETE top-level execution (8 BioBlend calls)"""
-    import upload_and_run_tool
+    from BioBlend import upload_and_run_tool
     print("✅ YOUR upload_and_run_tool.py FULL execution PASSED!")
     assert hasattr(upload_and_run_tool, 'gi')
     assert upload_and_run_tool.HISTORY_NAME == "biobhistory"
@@ -68,7 +69,7 @@ def test_upload_and_run_tool_full_execution(mock_galaxy_upload_run):
 
 def test_complete_upload_run_pipeline(mock_galaxy_upload_run):
     """Test YOUR EXACT flow: history → upload → tool → job → contents"""
-    import upload_and_run_tool
+    from BioBlend import upload_and_run_tool
     gi = upload_and_run_tool.gi
     
     # Test history lookup/create

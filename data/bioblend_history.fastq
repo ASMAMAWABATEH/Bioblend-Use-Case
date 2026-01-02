@@ -1,96 +1,75 @@
-
+#!/usr/bin/env python3
+"""
+upload_and_run_tool.py - Complete BioBlend upload + tool execution pipeline
+"""
 from bioblend.galaxy import GalaxyInstance
 import time
 import sys
+import os
 
 # ----------------------------------------------------------------------
 # Configuration
 # ----------------------------------------------------------------------
-GALAXY_URL = "http://localhost:8080"          # Local Galaxy
-API_KEY = "YOUR_API_KEY_HERE"                 # Replace with your API key
+GALAXY_URL = "http://localhost:8080"
+API_KEY = os.getenv("GALAXY_API_KEY", "demo_user")  # ✅ Secure
 
-HISTORY_NAME = "biobhistor    job_id = run["jobs"][
-from bioblend.galaxy import GalaxyInstance
-import time
-import sys
-
-# ----------------------------------------------------------------------
-# Configuration
-# ----------------------------------------------------------------------
-GALAXY_URL = "http://localhost:8080"          # Local Galaxy
-API_KEY = "b8ba458fe9b1c919040db8288c56ed06"                 # Replace with your API key
-
-HISTORY_NAME = "biobhistory"                  # History name
-INPUT_FILE = "biobhistory.fastq"              # Your local FASTQ filename
-FILE_TYPE = "fastqsanger"                     # Standard FASTQ datatype in Galaxy
-TOOL_ID = "cat1"                              # Simple Galaxy tool for testing
-# ----------------------------------------------------------------------
-
+HISTORY_NAME = "biobhistory"                       # ✅ Fixed
+INPUT_FILE = "bioblend_history.fastq"
+FILE_TYPE = "fastqsanger"
+TOOL_ID = "cat1"                                   # Simple test tool
 
 def wait_for_job(gi, job_id, timeout=600, interval=5):
-    """
-    Poll job state until it finishes or times out.
-    """
+    """Poll job state until complete or timeout."""
     start = time.time()
     while True:
         state = gi.jobs.show_job(job_id)["state"]
-
+        print(f"Job state: {state}")
+        
         if state in ["ok", "error"]:
             return state
-
         if (time.time() - start) > timeout:
             return "timeout"
-
         time.sleep(interval)
 
-
 def main():
-    print("Connecting to Galaxy...")
+    print("🔗 Connecting to Galaxy...")
     gi = GalaxyInstance(url=GALAXY_URL, key=API_KEY)
-
-    # Create a new history
-    print(f"Creating history: {HISTORY_NAME}")
+    
+    print(f"📁 Creating history: {HISTORY_NAME}")
     history = gi.histories.create_history(HISTORY_NAME)
     history_id = history["id"]
-
-    # Upload FASTQ file
-    print(f"Uploading file '{INPUT_FILE}' as FASTQ...")
-    upload = gi.tools.upload_file(
-        INPUT_FILE,
-        history_id,
-        file_type=FILE_TYPE
-    )
+    
+    print(f"📤 Uploading '{INPUT_FILE}'...")
+    if not os.path.exists(INPUT_FILE):
+        print(f"❌ {INPUT_FILE} not found!")
+        sys.exit(1)
+        
+    upload = gi.tools.upload_file(INPUT_FILE, history_id, file_type=FILE_TYPE)
     dataset_id = upload["outputs"][0]["id"]
-
-    print(f"File uploaded with dataset ID: {dataset_id}")
-
-    # Run the test tool (cat1)
-    print("Running tool: cat1")
+    print(f"✅ Dataset ID: {dataset_id}")
+    
+    print(f"⚙️ Running tool: {TOOL_ID}")
     run = gi.tools.run_tool(
         history_id=history_id,
         tool_id=TOOL_ID,
         tool_inputs={"input1": {"src": "hda", "id": dataset_id}}
     )
     job_id = run["jobs"][0]["id"]
-
-    # Wait for completion
-    print(f"Waiting for job {job_id} to finish...")
+    
+    print(f"⏳ Waiting for job {job_id}...")
     state = wait_for_job(gi, job_id)
-
+    
     if state != "ok":
-        print(f"Job finished with state: {state}")
+        print(f"❌ Job failed: {state}")
         sys.exit(1)
-
-    print("Job completed successfully.")
-
-    # Show outputs
-    print("History outputs:")
+    
+    print("✅ Job complete!")
     outputs = gi.histories.show_history(history_id, contents=True)
+    print("📋 Outputs:")
     for item in outputs:
-        print(f"- {item['name']} | {item['id']} | {item['state']}")
-
-    print("Done.")
-
+        print(f"  - {item['name']} [{item['state']}]")
+    
+    print("🎉 Pipeline complete!")
 
 if __name__ == "__main__":
     main()

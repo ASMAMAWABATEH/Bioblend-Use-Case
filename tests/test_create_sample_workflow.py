@@ -33,7 +33,7 @@ def test_imports_work():
 
 def test_create_sample_workflow_top_level(mock_galaxy_workflow):
     """Test YOUR create_sample_workflow.py top-level execution"""
-    import create_sample_workflow
+    from BioBlend import create_sample_workflow
     print("✅ create_sample_workflow.py imports PERFECT!")
     assert create_sample_workflow.WORKFLOW_NAME == "Sample_Workflow"
     assert create_sample_workflow.TOOL_ID == "cat1"
