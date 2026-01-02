@@ -5,12 +5,11 @@ on:
     branches:
       - main
       - master
-      - feature/bioblend-use-case
+      - 'feature/**'        # Trigger CI on all feature branches
   pull_request:
     branches:
       - main
       - master
-      - feature/bioblend-use-case
 
 jobs:
   test:
@@ -18,8 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version:
-          - "3.11"
+        python-version: [3.12]
 
     steps:
       - name: Checkout repository
@@ -30,8 +28,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Set up project using Makefile
+      - name: Install dependencies via Makefile
         run: make set_up
 
-      - name: Run tests using Makefile
+      - name: Run tests via Makefile
         run: make run_test
