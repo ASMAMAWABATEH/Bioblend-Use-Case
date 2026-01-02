@@ -1,11 +1,12 @@
 name: CI - Bioblend Unit Tests
 
+# Trigger CI on pushes and pull requests
 on:
   push:
     branches:
       - main
       - master
-      - 'feature/**'        # Trigger CI on all feature branches
+      - 'feature/**'    # Any branch starting with feature/ triggers CI
   pull_request:
     branches:
       - main
@@ -20,16 +21,24 @@ jobs:
         python-version: [3.12]
 
     steps:
+      # 1. Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies via Makefile
-        run: make set_up
+      # 3. Upgrade pip and install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
 
-      - name: Run tests via Makefile
-        run: make run_test
+      # 4. Run unit tests
+      - name: Run tests
+        run: |
+          PYTHONPATH=src pytest tests/ -v --cov=src
