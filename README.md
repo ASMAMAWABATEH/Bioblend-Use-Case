@@ -133,7 +133,7 @@ Unit tests are provided in `tests/` and mirror the scripts in `src/BioBlend/`:
 Run all tests locally:
 
 ```bash
-pytest -v tests/
+pytest
 ```
 
 ## CI/CD Integration (GitHub Actions)
