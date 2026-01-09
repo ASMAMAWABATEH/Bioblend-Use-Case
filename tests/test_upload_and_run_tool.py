@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock, patch
-from BioBlend import upload_and_run_tool
+from src.BioBlend import upload_and_run_tool
 
 # -----------------------------
 # Fixtures
@@ -20,7 +20,7 @@ class TestUploadAndRunTool:
 
     def test_get_galaxy_instance(self):
         """GalaxyInstance is called with correct URL and key."""
-        with patch("BioBlend.upload_and_run_tool.GalaxyInstance") as mock:
+        with patch("src.BioBlend.upload_and_run_tool.GalaxyInstance") as mock:
             upload_and_run_tool.get_galaxy_instance()
             mock.assert_called_once_with(
                 url="http://localhost:8080",

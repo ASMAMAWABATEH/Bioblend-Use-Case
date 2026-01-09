@@ -1,12 +1,12 @@
 # tests/test_create_sample_workflow.py
 from unittest.mock import patch, MagicMock
 import pytest
-import BioBlend.create_sample_workflow as csw
+import src.BioBlend.create_sample_workflow as csw
 
 def test_get_galaxy_instance():
     """GalaxyInstance is called with correct URL and key"""
     # Patch where GalaxyInstance is actually used in create_sample_workflow
-    with patch("BioBlend.create_sample_workflow.GalaxyInstance") as mock_gi:
+    with patch("src.BioBlend.create_sample_workflow.GalaxyInstance") as mock_gi:
         csw.get_galaxy_instance()
         mock_gi.assert_called_once_with(
             url=csw.GALAXY_URL,

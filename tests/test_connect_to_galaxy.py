@@ -1,12 +1,12 @@
 import pytest
 from unittest.mock import Mock, patch
-from BioBlend import connect_to_galaxy
+from src.BioBlend import connect_to_galaxy
 
 class TestConnectToGalaxy:
 
     def test_get_galaxy_instance(self):
         """GalaxyInstance is called with correct URL and key"""
-        with patch("BioBlend.connect_to_galaxy.GalaxyInstance") as mock:
+        with patch("src.BioBlend.connect_to_galaxy.GalaxyInstance") as mock:
             connect_to_galaxy.get_galaxy_instance()
             mock.assert_called_once_with(
                 url=connect_to_galaxy.GALAXY_URL,

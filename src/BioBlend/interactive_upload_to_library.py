@@ -1,5 +1,5 @@
 # BioBlend/interactive_upload_to_library.py
-from BioBlend.connect_to_galaxy import get_galaxy_instance
+from src.BioBlend.connect_to_galaxy import get_galaxy_instance
 
 # Default configuration
 GALAXY_URL = "http://localhost:8080"

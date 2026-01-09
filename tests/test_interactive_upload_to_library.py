@@ -1,11 +1,11 @@
 # tests/test_interactive_upload_to_library.py
 import pytest
 from unittest.mock import patch, MagicMock
-import BioBlend.interactive_upload_to_library as iul
+import src.BioBlend.interactive_upload_to_library as iul
 
 def test_get_galaxy_instance_called():
     """Test GalaxyInstance is called via get_galaxy_instance"""
-    with patch("BioBlend.interactive_upload_to_library.get_galaxy_instance") as mock_gi:
+    with patch("src.BioBlend.interactive_upload_to_library.get_galaxy_instance") as mock_gi:
         iul.get_galaxy_instance()
         mock_gi.assert_called_once()
 

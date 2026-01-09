@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock, patch
-import BioBlend.view_data_library as view_data_library
+import src.BioBlend.view_data_library as view_data_library
 
 
 class TestViewDataLibrary:
@@ -26,7 +26,7 @@ class TestViewDataLibrary:
 
     def test_get_galaxy_instance(self):
         """GalaxyInstance should be created with correct URL and key"""
-        with patch("BioBlend.view_data_library.GalaxyInstance") as mock_gi_class:
+        with patch("src.BioBlend.view_data_library.GalaxyInstance") as mock_gi_class:
             gi = view_data_library.get_galaxy_instance()
 
             mock_gi_class.assert_called_once_with(

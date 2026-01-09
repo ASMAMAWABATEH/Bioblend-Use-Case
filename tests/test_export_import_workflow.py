@@ -5,12 +5,12 @@ import os
 import json
 import tempfile
 
-import BioBlend.export_import_workflow as eiw
+import src.BioBlend.export_import_workflow as eiw
 
 def test_get_galaxy_instance():
     """GalaxyInstance should be called with correct URL and key"""
     # Patch at the place it's used inside export_import_workflow
-    with patch("BioBlend.export_import_workflow.GalaxyInstance") as mock_gi:
+    with patch("src.BioBlend.export_import_workflow.GalaxyInstance") as mock_gi:
         eiw.get_galaxy_instance()
         mock_gi.assert_called_once_with(url=eiw.GALAXY_URL, key=eiw.API_KEY)
 

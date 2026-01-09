@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import builtins
 
 # Import the refactored module
-from BioBlend import bioblend_history_run as bhr
+from src.BioBlend import bioblend_history_run as bhr
 
 
 @pytest.fixture
@@ -36,7 +36,7 @@ def mock_gi():
 
 def test_get_galaxy_instance():
     """Test GalaxyInstance creation"""
-    with patch("BioBlend.bioblend_history_run.GalaxyInstance") as mock:
+    with patch("src.BioBlend.bioblend_history_run.GalaxyInstance") as mock:
      bhr.get_galaxy_instance()
      mock.assert_called_once_with(
         url=bhr.GALAXY_URL,

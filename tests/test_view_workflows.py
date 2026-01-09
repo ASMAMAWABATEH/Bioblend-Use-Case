@@ -1,7 +1,7 @@
 # tests/test_view_workflows.py
 import pytest
 from unittest.mock import Mock, patch
-from BioBlend import view_workflows
+from src.BioBlend import view_workflows
 
 class TestViewWorkflows:
 
@@ -20,7 +20,7 @@ class TestViewWorkflows:
     def test_get_galaxy_instance(self):
         """Test that GalaxyInstance is created with correct parameters"""
         # Patch where GalaxyInstance is imported, not where it's defined
-        with patch('BioBlend.view_workflows.GalaxyInstance') as mock:
+        with patch('src.BioBlend.view_workflows.GalaxyInstance') as mock:
             view_workflows.get_galaxy_instance()
             mock.assert_called_once_with(
                 url="http://localhost:8080",

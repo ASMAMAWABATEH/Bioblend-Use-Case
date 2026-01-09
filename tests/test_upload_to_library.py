@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock, patch
-from BioBlend import upload_to_library
+from src.BioBlend import upload_to_library
 
 class TestUploadToLibrary:
     @pytest.fixture
@@ -14,7 +14,7 @@ class TestUploadToLibrary:
 
     def test_get_galaxy_instance(self):
         """GalaxyInstance is called with correct URL and key"""
-        with patch("BioBlend.upload_to_library.GalaxyInstance") as mock:
+        with patch("src.BioBlend.upload_to_library.GalaxyInstance") as mock:
             upload_to_library.get_galaxy_instance()
             mock.assert_called_once_with(
                 url="http://localhost:8080",

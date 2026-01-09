@@ -1,7 +1,7 @@
 # tests/test_auto_upload_to_library.py
 import pytest
 from unittest.mock import Mock, patch
-from BioBlend import auto_upload_to_library
+from src.BioBlend import auto_upload_to_library
 
 class TestAutoUploadToLibrary:
 
@@ -21,7 +21,7 @@ class TestAutoUploadToLibrary:
         return gi
 
     def test_connect_galaxy(self):
-        with patch('BioBlend.auto_upload_to_library.GalaxyInstance') as mock:
+        with patch('src.BioBlend.auto_upload_to_library.GalaxyInstance') as mock:
             auto_upload_to_library.connect_galaxy("url", "key")
             mock.assert_called_once_with(url="url", key="key")
 

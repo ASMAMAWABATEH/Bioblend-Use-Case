@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock
-from BioBlend import invoke_workflow as iw
+from src.BioBlend import invoke_workflow as iw
 
 @pytest.fixture
 def mock_gi():
