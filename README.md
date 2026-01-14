@@ -1,7 +1,5 @@
 # Galaxy Automation with BioBlend (Python)
 
-# Galaxy Automation with BioBlend (Python)
-
 [![CI](https://github.com/ASMAMAWABATEH/Bioblend-Use-Case/actions/workflows/ci.yml/badge.svg)](https://github.com/ASMAMAWABATEH/Bioblend-Use-Case/actions/workflows/ci.yml)
 [![Coverage Status](https://img.shields.io/badge/coverage-82%25-yellowgreen)](https://github.com/ASMAMAWABATEH/Bioblend-Use-Case/actions/workflows/ci.yml)
 
