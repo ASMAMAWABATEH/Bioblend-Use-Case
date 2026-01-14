@@ -103,3 +103,47 @@ class TestAutoUploadToLibrary:
             assert env["FILE_TYPE"] == "fastqsanger"
             assert env["NEW_LIBRARY_NAME"] == "MyLibrary"
             assert "Automatically created library" in env["NEW_LIBRARY_DESC"]
+
+    # ---------------------------
+    # Main function tests
+    # ---------------------------
+    def test_main_success(self, mock_gi, tmp_path):
+        test_file = tmp_path / "file.fastq"
+        test_file.write_text("dummy content")
+
+        with patch('src.BioBlend.auto_upload_to_library.get_env_variables') as mock_env, \
+             patch('src.BioBlend.auto_upload_to_library.connect_galaxy') as mock_connect, \
+             patch('builtins.print') as mock_print:
+            mock_env.return_value = {
+                "GALAXY_URL": "url",
+                "API_KEY": "key",
+                "FILE_NAME": str(test_file),
+                "FILE_TYPE": "fastqsanger",
+                "NEW_LIBRARY_NAME": "Test Library",
+                "NEW_LIBRARY_DESC": "Desc"
+            }
+            mock_connect.return_value = mock_gi
+
+            auto_upload_to_library.main()
+
+            mock_print.assert_any_call("Connected to Galaxy.")
+            mock_print.assert_any_call("Using library ID: lib-001")
+            mock_print.assert_any_call("File uploaded successfully! Dataset ID: ds-001")
+
+    def test_main_file_not_found(self, mock_gi):
+        with patch('src.BioBlend.auto_upload_to_library.get_env_variables') as mock_env, \
+             patch('src.BioBlend.auto_upload_to_library.connect_galaxy') as mock_connect, \
+             patch('builtins.print') as mock_print:
+            mock_env.return_value = {
+                "GALAXY_URL": "url",
+                "API_KEY": "key",
+                "FILE_NAME": "missing_file.fastq",
+                "FILE_TYPE": "fastqsanger",
+                "NEW_LIBRARY_NAME": "Test Library",
+                "NEW_LIBRARY_DESC": "Desc"
+            }
+            mock_connect.return_value = mock_gi
+
+            auto_upload_to_library.main()
+            mock_print.assert_any_call("Connected to Galaxy.")
+            mock_print.assert_any_call("Error: File not found: missing_file.fastq")

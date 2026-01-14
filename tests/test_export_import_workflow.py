@@ -8,7 +8,7 @@ import tempfile
 import src.BioBlend.export_import_workflow as eiw
 
 # ----------------------------
-# TEST: get_galaxy_instance
+# Test GalaxyInstance creation
 # ----------------------------
 def test_get_galaxy_instance():
     with patch("src.BioBlend.export_import_workflow.GalaxyInstance") as mock_gi:
@@ -16,7 +16,7 @@ def test_get_galaxy_instance():
         mock_gi.assert_called_once_with(url=eiw.GALAXY_URL, key=eiw.API_KEY)
 
 # ----------------------------
-# TEST: export_workflow
+# Test export_workflow
 # ----------------------------
 def test_export_workflow(tmp_path):
     mock_gi = MagicMock()
@@ -30,8 +30,18 @@ def test_export_workflow(tmp_path):
         data = json.load(f)
     assert data == workflow_dict
 
+def test_export_workflow_default_dir(tmp_path, monkeypatch):
+    # Patch EXPORT_DIR to tmp_path
+    monkeypatch.setattr(eiw, "EXPORT_DIR", tmp_path)
+    mock_gi = MagicMock()
+    workflow_dict = {"name": "TestWorkflow", "steps": {}}
+    mock_gi.workflows.export_workflow_dict.return_value = workflow_dict
+
+    exported_file = eiw.export_workflow(mock_gi, workflow_id="wf-001")
+    assert os.path.exists(exported_file)
+
 # ----------------------------
-# TEST: import_workflow
+# Test import_workflow
 # ----------------------------
 def test_import_workflow(tmp_path):
     workflow_dict = {"name": "TestWorkflow", "steps": {}}
@@ -52,7 +62,7 @@ def test_import_workflow_file_not_found():
         eiw.import_workflow(mock_gi, "non_existent_file.ga")
 
 # ----------------------------
-# TEST: show_workflows
+# Test show_workflows
 # ----------------------------
 def test_show_workflows():
     mock_gi = MagicMock()
@@ -61,11 +71,10 @@ def test_show_workflows():
     assert workflows == [{"name": "WF1", "id": "wf-001"}]
 
 # ----------------------------
-# TEST: perform_export_import
+# Test perform_export_import
 # ----------------------------
 def test_perform_export_import(tmp_path):
     mock_gi = MagicMock()
-
     workflow_dict = {"name": "TestWorkflow", "steps": {}}
     mock_gi.workflows.export_workflow_dict.return_value = workflow_dict
     mock_gi.workflows.import_workflow_dict.return_value = {"id": "wf-001"}
@@ -75,14 +84,35 @@ def test_perform_export_import(tmp_path):
     assert imported_id == "wf-001"
 
 # ----------------------------
-# EDGE CASE: main() with no workflows
+# Test main() normal flow
+# ----------------------------
+def test_main_normal(monkeypatch, tmp_path):
+    mock_gi = MagicMock()
+    workflow_dict = {"id": "wf-001", "name": "WF1"}
+    mock_gi.workflows.get_workflows.return_value = [workflow_dict]
+    mock_gi.workflows.export_workflow_dict.return_value = {"name": "WF1", "steps": {}}
+    mock_gi.workflows.import_workflow_dict.return_value = {"id": "wf-001"}
+
+    monkeypatch.setattr(eiw, "get_galaxy_instance", lambda: mock_gi)
+    monkeypatch.setattr(eiw, "EXPORT_DIR", tmp_path)
+
+    printed = []
+    monkeypatch.setattr("builtins.print", lambda *args, **kwargs: printed.append(" ".join(str(a) for a in args)))
+
+    eiw.main()
+    # Check key print outputs
+    assert any("Workflow exported to" in line for line in printed)
+    assert any("Workflow imported successfully" in line for line in printed)
+    assert any("All workflows on the server:" in line for line in printed)
+
+# ----------------------------
+# Edge case: main() with no workflows
 # ----------------------------
 def test_main_no_workflows(monkeypatch):
     mock_gi = MagicMock()
     mock_gi.workflows.get_workflows.return_value = []
 
     monkeypatch.setattr(eiw, "get_galaxy_instance", lambda: mock_gi)
-    # Patch print to capture
     printed = []
     monkeypatch.setattr("builtins.print", lambda *args, **kwargs: printed.append(" ".join(str(a) for a in args)))
 

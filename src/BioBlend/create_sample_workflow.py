@@ -1,10 +1,11 @@
+# src/BioBlend/create_sample_workflow.py
 from bioblend.galaxy import GalaxyInstance
 
 # ----------------------------
 # CONFIGURATION
 # ----------------------------
 GALAXY_URL = "http://localhost:8080"
-API_KEY = "b8ba458fe9b1c919040db8288c56ed06"  # Replace with your Galaxy API key
+API_KEY = "b8ba458fe9b1c919040db8288c56ed06"
 
 # ----------------------------
 # FUNCTIONS
@@ -16,7 +17,7 @@ def get_galaxy_instance():
 def create_workflow(gi, name, annotation="", steps=None):
     """
     Create a simple workflow in Galaxy.
-    steps: list of dicts, each dict must have 'tool_id' and 'label'
+    steps: list of dicts, each dict must have 'tool_id' and optional 'label'
     """
     if steps is None:
         steps = []
@@ -45,11 +46,10 @@ def show_workflows(gi):
     """Return list of all workflows"""
     return gi.workflows.get_workflows()
 
-
 # ----------------------------
-# SCRIPT ENTRY
+# MAIN FUNCTION (TESTABLE)
 # ----------------------------
-if __name__ == "__main__":
+def main():
     gi = get_galaxy_instance()
     workflow_id = create_workflow(
         gi,
@@ -57,11 +57,19 @@ if __name__ == "__main__":
         annotation="This is a sample workflow created via Bioblend",
         steps=[{"tool_id": "cat1", "label": "Concatenate Step"}]
     )
-    print(f"Workflow created with ID: {workflow_id}")
-
     workflows = show_workflows(gi)
+
+    # Optional printing for CLI
+    print(f"Workflow created with ID: {workflow_id}")
     print("\nCurrent workflows on server:")
     for wf in workflows:
         print(f"- {wf['name']} | ID: {wf['id']} | Published: {wf.get('published', False)}")
-
     print("\n✅ Workflow creation and verification complete!")
+
+    return workflow_id, workflows
+
+# ----------------------------
+# SCRIPT ENTRY
+# ----------------------------
+if __name__ == "__main__":
+    main()

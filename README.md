@@ -1,7 +1,7 @@
 # Galaxy Automation with BioBlend (Python)
 
 [![CI](https://github.com/ASMAMAWABATEH/Bioblend-Use-Case/actions/workflows/ci.yml/badge.svg)](https://github.com/ASMAMAWABATEH/Bioblend-Use-Case/actions/workflows/ci.yml)
-[![Coverage Status](https://img.shields.io/badge/coverage-82%25-yellowgreen)](https://github.com/ASMAMAWABATEH/Bioblend-Use-Case/actions/workflows/ci.yml)
+[![Coverage Status](https://img.shields.io/badge/coverage-96%25-yellowgreen)](https://github.com/ASMAMAWABATEH/Bioblend-Use-Case/actions/workflows/ci.yml)
 
 
 ## Overview
@@ -19,7 +19,7 @@ Using BioBlend, the project implements and tests the following capabilities:
 Each feature is covered by unit tests to ensure expected behavior and correctness.
 
 ## Technology Stack
-- Python 3.11+
+- Python 3.12
 - BioBlend (Galaxy API client)
 - Galaxy (local instance)
 - pytest / unittest (for automated testing)
