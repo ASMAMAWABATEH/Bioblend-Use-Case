@@ -7,8 +7,8 @@ import os
 # CONFIGURATION
 # ----------------------------
 GALAXY_URL = "http://localhost:8080"
-API_KEY = "b8ba458fe9b1c919040db8288c56ed06"  # Replace with your Galaxy API key
-EXPORT_DIR = "exported_workflows"              # Directory to save exported workflows
+API_KEY = "b8ba458fe9b1c919040db8288c56ed06"
+EXPORT_DIR = "exported_workflows"
 
 # ----------------------------
 # GALAXY CONNECTION
@@ -21,9 +21,7 @@ def get_galaxy_instance():
 # EXPORT WORKFLOW
 # ----------------------------
 def export_workflow(gi, workflow_id, output_dir=EXPORT_DIR):
-    """
-    Export a Galaxy workflow to a JSON file.
-    """
+    """Export a Galaxy workflow to a JSON file."""
     workflow = gi.workflows.export_workflow_dict(workflow_id)
     os.makedirs(output_dir, exist_ok=True)
     file_path = os.path.join(output_dir, f"{workflow['name']}.ga")
@@ -35,9 +33,7 @@ def export_workflow(gi, workflow_id, output_dir=EXPORT_DIR):
 # IMPORT WORKFLOW
 # ----------------------------
 def import_workflow(gi, workflow_file):
-    """
-    Import a workflow from a JSON (.ga) file into Galaxy.
-    """
+    """Import a workflow from a JSON (.ga) file into Galaxy."""
     if not os.path.exists(workflow_file):
         raise FileNotFoundError(f"Workflow file not found: {workflow_file}")
 
@@ -48,6 +44,18 @@ def import_workflow(gi, workflow_file):
     return imported["id"]
 
 # ----------------------------
+# HIGH-LEVEL WRAPPER
+# ----------------------------
+def perform_export_import(gi, workflow_id, output_dir=EXPORT_DIR):
+    """
+    Wrapper to export a workflow and import it back.
+    Returns: (exported_file_path, imported_id)
+    """
+    exported_file = export_workflow(gi, workflow_id, output_dir)
+    imported_id = import_workflow(gi, exported_file)
+    return exported_file, imported_id
+
+# ----------------------------
 # SHOW WORKFLOWS
 # ----------------------------
 def show_workflows(gi):
@@ -55,7 +63,7 @@ def show_workflows(gi):
     return gi.workflows.get_workflows()
 
 # ----------------------------
-# MAIN FUNCTION
+# CLI / MAIN
 # ----------------------------
 def main():
     gi = get_galaxy_instance()
@@ -67,12 +75,9 @@ def main():
         return
 
     workflow_id = workflows[0]["id"]
-    print(f"Exporting workflow: {workflows[0]['name']}")
-    exported_file = export_workflow(gi, workflow_id)
-    print(f"Workflow exported to: {exported_file}")
+    exported_file, imported_id = perform_export_import(gi, workflow_id)
 
-    print("Importing workflow back into Galaxy...")
-    imported_id = import_workflow(gi, exported_file)
+    print(f"Workflow exported to: {exported_file}")
     print(f"Workflow imported successfully with ID: {imported_id}")
 
     print("All workflows on the server:")
@@ -80,6 +85,7 @@ def main():
         print(f"- {wf['name']} | ID: {wf['id']}")
 
     print("Done ✅")
+
 
 if __name__ == "__main__":
     main()

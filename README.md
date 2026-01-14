@@ -1,5 +1,11 @@
 # Galaxy Automation with BioBlend (Python)
 
+# Galaxy Automation with BioBlend (Python)
+
+[![CI](https://github.com/ASMAMAWABATEH/Bioblend-Use-Case/actions/workflows/ci.yml/badge.svg)](https://github.com/ASMAMAWABATEH/Bioblend-Use-Case/actions/workflows/ci.yml)
+[![Coverage Status](https://img.shields.io/badge/coverage-82%25-yellowgreen)](https://github.com/ASMAMAWABATEH/Bioblend-Use-Case/actions/workflows/ci.yml)
+
+
 ## Overview
 This repository demonstrates practical use cases for the **BioBlend** Python library to programmatically control and automate the **Galaxy** data analysis platform. It covers connecting to Galaxy servers, managing datasets, libraries, and workflows via Python code, with comprehensive unit tests to verify functionality.
 
