@@ -1,73 +1,73 @@
+# tests/test_create_sample_workflow.py
 import pytest
-import sys
-import os
-sys.path.insert(0, '.')
+from unittest.mock import patch, MagicMock
+from src.BioBlend import create_sample_workflow as csw
 
+# ----------------------------
+# Fixture: mock GalaxyInstance
+# ----------------------------
 @pytest.fixture
-def mock_galaxy_workflow(monkeypatch):
-    """Mock YOUR EXACT create_sample_workflow.py methods"""
-    def mock_galaxy_instance(url, key):
-        mock_gi = type('MockGalaxy', (), {})()
-        
-        # Mock YOUR gi.tools.show_tool(TOOL_ID)
-        mock_gi.tools = type('MockTools', (), {})()
-        mock_gi.tools.show_tool = lambda tool_id: {'version': '1.0.0'}
-        
-        # Mock YOUR gi.workflows.import_workflow_dict()
-        mock_gi.workflows = type('MockWorkflows', (), {})()
-        mock_gi.workflows.import_workflow_dict = lambda workflow_dict: {'id': 'wf-999'}
-        
-        # Mock YOUR gi.workflows.get_workflows()
-        mock_gi.workflows.get_workflows = lambda: [
-            {'name': 'Sample_Workflow', 'id': 'wf-999', 'published': False}
-        ]
-        return mock_gi
-    
-    monkeypatch.setattr('bioblend.galaxy.GalaxyInstance', mock_galaxy_instance)
-    monkeypatch.setattr('sys.exit', lambda code: None)
-    monkeypatch.setattr('builtins.print', lambda *args: None)
+def mock_gi():
+    gi = MagicMock()
+    gi.tools.show_tool.return_value = {"version": "1.0.0"}
+    gi.workflows.import_workflow_dict.return_value = {"id": "workflow-001"}
+    gi.workflows.get_workflows.return_value = [
+        {"name": "WF1", "id": "wf-001", "published": False},
+        {"name": "WF2", "id": "wf-002", "published": True},
+    ]
+    return gi
 
-def test_imports_work():
-    """Test pytest works for create_sample_workflow"""
-    assert 1 + 1 == 2
+# ----------------------------
+# Test get_galaxy_instance
+# ----------------------------
+def test_get_galaxy_instance():
+    with patch("src.BioBlend.create_sample_workflow.GalaxyInstance") as mock_cls:
+        csw.get_galaxy_instance()
+        mock_cls.assert_called_once_with(url=csw.GALAXY_URL, key=csw.API_KEY)
 
-def test_create_sample_workflow_top_level(mock_galaxy_workflow):
-    """Test YOUR create_sample_workflow.py top-level execution"""
-    from BioBlend import create_sample_workflow
-    print("✅ create_sample_workflow.py imports PERFECT!")
-    assert create_sample_workflow.WORKFLOW_NAME == "Sample_Workflow"
-    assert create_sample_workflow.TOOL_ID == "cat1"
+# ----------------------------
+# Test create_workflow
+# ----------------------------
+def test_create_workflow(mock_gi):
+    workflow_id = csw.create_workflow(
+        mock_gi,
+        name="TestWorkflow",
+        steps=[{"tool_id": "cat1", "label": "Step 1"}]
+    )
+    assert workflow_id == "workflow-001"
+    args, _ = mock_gi.workflows.import_workflow_dict.call_args
+    wf_dict = args[0]
+    assert wf_dict["name"] == "TestWorkflow"
+    step0 = wf_dict["steps"]["0"]
+    assert step0["tool_id"] == "cat1"
+    assert step0["label"] == "Step 1"
 
-def test_workflow_creation_pipeline(mock_galaxy_workflow):
-    """Test YOUR EXACT workflow creation flow"""
-    gi = type('MockGI', (), {})()
-    gi.tools = type('MockTools', (), {})()
-    gi.tools.show_tool = lambda tool_id: {'version': '1.0.0'}  # YOUR exact call
+# ----------------------------
+# Test show_workflows
+# ----------------------------
+def test_show_workflows(mock_gi):
+    workflows = csw.show_workflows(mock_gi)
+    assert len(workflows) == 2
+    assert workflows[0]["name"] == "WF1"
+    assert workflows[1]["published"] is True
+
+# ----------------------------
+# Test CLI main block
+# ----------------------------
+def test_main(monkeypatch, mock_gi):
+    # Patch get_galaxy_instance to return mock_gi
+    monkeypatch.setattr(csw, "get_galaxy_instance", lambda: mock_gi)
     
-    gi.workflows = type('MockWorkflows', (), {})()
-    gi.workflows.import_workflow_dict = lambda workflow_dict: {'id': 'wf-999'}
-    gi.workflows.get_workflows = lambda: [{'name': 'Sample_Workflow', 'id': 'wf-999'}]
-    
-    # Test YOUR workflow_dict structure
-    workflow_dict = {
-        "name": "Sample_Workflow",
-        "annotation": "This is a sample workflow created via Bioblend",
-        "steps": {
-            "0": {
-                "type": "tool",
-                "tool_id": "cat1",  # YOUR TOOL_ID
-                "tool_version": gi.tools.show_tool("cat1")['version'],  # YOUR exact line
-                "label": "Concatenate Step",
-                "inputs": {}
-            }
-        }
-    }
-    assert workflow_dict['steps']['0']['tool_id'] == 'cat1'
-    
-    # Test import + verification
-    imported = gi.workflows.import_workflow_dict(workflow_dict)
-    assert imported['id'] == 'wf-999'
-    
-    workflows = gi.workflows.get_workflows()
-    assert workflows[0]['name'] == 'Sample_Workflow'
-    print("✅ Workflow creation: tools.show_tool() + import_workflow_dict() PERFECT!")
+    # Patch print to capture output
+    printed = []
+    monkeypatch.setattr("builtins.print", lambda *args, **kwargs: printed.append(" ".join(str(a) for a in args)))
+
+    # Run main
+    csw.main()
+
+    # Assertions
+    assert any("Workflow created with ID: workflow-001" in line for line in printed)
+    assert any("Current workflows on server:" in line for line in printed)
+    assert any("WF1 | ID: wf-001" in line for line in printed)
+    assert any("WF2 | ID: wf-002" in line for line in printed)
+    assert any("✅ Workflow creation and verification complete!" in line for line in printed)

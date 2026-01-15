@@ -1,91 +1,87 @@
-#!/usr/bin/env python3
-from bioblend.galaxy import GalaxyInstance
+# src/BioBlend/upload_and_run_tool.py
 import os
-import time
+from bioblend.galaxy import GalaxyInstance
 
 # ----------------------------
-# CONFIGURATION
+# Configuration
 # ----------------------------
-GALAXY_URL = "http://localhost:8080"   # Change if needed
-API_KEY = "b8ba458fe9b1c919040db8288c56ed06"          # Replace with your Galaxy API key
-HISTORY_NAME = "biobhistory"
-FILE_NAME = "biobhistory.fastq"
-FILE_TYPE = "fastqsanger"  # FASTQ format in Galaxy
-TOOL_ID = "cat1"           # Example: concatenate datasets
-
-# ----------------------------
-# CONNECT TO GALAXY
-# ----------------------------
-gi = GalaxyInstance(url=GALAXY_URL, key=API_KEY)
-print("Connected to Galaxy.")
+GALAXY_URL = "http://localhost:8080"
+API_KEY = "b8ba458fe9b1c919040db8288c56ed06"
+DEFAULT_HISTORY_NAME = "Test_History"
+DEFAULT_FILE_NAME = "bioblend_history.fastq"
+DEFAULT_TOOL_ID = "fastqc"
+DEFAULT_TOOL_INPUTS = {}  # Example: {"input_file": {"src": "hda", "id": "dataset-001"}}
 
 # ----------------------------
-# CHECK OR CREATE HISTORY
+# Core Functions (testable)
 # ----------------------------
-histories = gi.histories.get_histories()
-history_id = None
+def get_galaxy_instance(url=GALAXY_URL, key=API_KEY):
+    """Create and return a GalaxyInstance."""
+    return GalaxyInstance(url=url, key=key)
 
-for h in histories:
-    if h['name'] == HISTORY_NAME:
-        history_id = h['id']
-        print(f"Using existing history: {HISTORY_NAME} (ID: {history_id})")
-        break
+def create_history(gi, history_name=DEFAULT_HISTORY_NAME):
+    """Create a new history in Galaxy and return its dict."""
+    return gi.histories.create_history(history_name)
 
-if not history_id:
-    history = gi.histories.create_history(name=HISTORY_NAME)
-    history_id = history['id']
-    print(f"Created history: {HISTORY_NAME} (ID: {history_id})")
+def upload_file(gi, history_id, file_path, file_type="fastqsanger"):
+    """
+    Upload a local file to a Galaxy history.
+    
+    Raises FileNotFoundError if file does not exist.
+    Returns the dataset ID.
+    """
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File '{file_path}' not found!")
+    uploaded = gi.tools.upload_file(file_path, history_id, file_type=file_type)
+    return uploaded[0]["id"]
 
-# ----------------------------
-# UPLOAD DATASET
-# ----------------------------
-if not os.path.exists(FILE_NAME):
-    print(f"Error: File '{FILE_NAME}' not found!")
-    exit(1)
+def run_tool(gi, tool_id, history_id, tool_inputs):
+    """
+    Run a tool in Galaxy with given inputs.
+    
+    Returns the result dictionary.
+    """
+    return gi.tools.run_tool(history_id, tool_id, tool_inputs=tool_inputs)
 
-print(f"Uploading file '{FILE_NAME}' as {FILE_TYPE}...")
-dataset = gi.tools.upload_file(FILE_NAME, history_id, file_type=FILE_TYPE)
-
-# Wait for dataset to finish uploading
-dataset_id = dataset['outputs'][0]['id']
-state = ""
-while state != "ok":
-    time.sleep(2)
-    d = gi.datasets.show_dataset(dataset_id)
-    state = d['state']
-print(f"File uploaded successfully! Dataset ID: {dataset_id}")
-
-# ----------------------------
-# RUN TOOL ON DATASET
-# ----------------------------
-print(f"\nRunning tool '{TOOL_ID}' on the uploaded dataset...")
-# Input mapping depends on the tool; cat1 uses "input1" for first dataset
-tool_inputs = {
-    "input1": {"src": "hda", "id": dataset_id}
-}
-
-run = gi.tools.run_tool(history_id, TOOL_ID, tool_inputs)
-job_id = run["jobs"][0]["id"]
-print(f"Job submitted. Job ID: {job_id}")
-
-# Wait for job to finish
-job_state = ""
-while job_state not in ["ok", "error", "failed"]:
-    time.sleep(3)
-    job_info = gi.jobs.show_job(job_id)
-    job_state = job_info["state"]
-
-if job_state == "ok":
-    print(f"Tool finished successfully! Job ID: {job_id}")
-else:
-    print(f"Tool failed! Job ID: {job_id}, state={job_state}")
+def perform_full_workflow(
+    gi,
+    history_name=DEFAULT_HISTORY_NAME,
+    file_path=DEFAULT_FILE_NAME,
+    tool_id=DEFAULT_TOOL_ID,
+    tool_inputs=None
+):
+    """
+    High-level wrapper: create history, upload file, run tool.
+    
+    Returns (history_id, dataset_id, tool_result)
+    """
+    history = create_history(gi, history_name)
+    dataset_id = upload_file(gi, history["id"], file_path)
+    
+    # Prepare tool inputs
+    if tool_inputs is None:
+        tool_inputs = {"input_file": {"src": "hda", "id": dataset_id}}
+    
+    result = run_tool(gi, tool_id, history["id"], tool_inputs)
+    return history["id"], dataset_id, result
 
 # ----------------------------
-# LIST DATASETS IN HISTORY
+# CLI / Script Execution
 # ----------------------------
-print(f"\nDatasets in history '{HISTORY_NAME}':")
-contents = gi.histories.show_history(history_id, contents=True)
-for d in contents:
-    print(f"- {d['name']} | {d['id']} | state={d['state']} | type={d['type']}")
+def main():
+    gi = get_galaxy_instance()
+    print("Connected to Galaxy.")
 
-print("\nDone ✅ All automated!")
+    try:
+        history_id, dataset_id, tool_result = perform_full_workflow(gi)
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        return
+
+    print(f"Created history ID: {history_id}")
+    print(f"Uploaded dataset ID: {dataset_id}")
+    print(f"Tool run result: {tool_result}")
+
+
+if __name__ == "__main__":
+    main()

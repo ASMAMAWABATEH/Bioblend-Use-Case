@@ -1,70 +1,68 @@
-#!/usr/bin/env python3
-from bioblend.galaxy import GalaxyInstance
-import os
+# BioBlend/interactive_upload_to_library.py
+from src.BioBlend.connect_to_galaxy import get_galaxy_instance
+from typing import Tuple, Optional, List, Dict
 
-# ----------------------------
-# CONFIGURATION
-# ----------------------------
-GALAXY_URL = "http://localhost:8080"   # Change if needed
-API_KEY = "b8ba458fe9b1c919040db8288c56ed06"          # Replace with your Galaxy API key
-FILE_NAME = "biobhistory.fastq"        # File to upload
-FILE_TYPE = "fastqsanger"              # Galaxy dataset type
+GALAXY_URL = "http://localhost:8080"
+API_KEY = "b8ba458fe9b1c919040db8288c56ed06"
 
-# ----------------------------
-# CONNECT TO GALAXY
-# ----------------------------
-gi = GalaxyInstance(url=GALAXY_URL, key=API_KEY)
-print("Connected to Galaxy.\n")
+# =========================
+# Core Logic (testable)
+# =========================
+def select_library(gi, library_name: str) -> Optional[Dict]:
+    """Select an existing library by name. Returns dict if found, else None."""
+    libraries = gi.libraries.get_libraries()
+    for lib in libraries:
+        if lib["name"] == library_name:
+            return lib
+    return None
 
-# ----------------------------
-# LIST DATA LIBRARIES
-# ----------------------------
-libraries = gi.libraries.get_libraries()
-if not libraries:
-    print("No libraries found on the server!")
-    exit(1)
+def upload_file(gi, library_id: str, file_path: str, file_type: str = "auto") -> List[Dict]:
+    """Upload a file to a given library."""
+    return gi.libraries.upload_file_from_local_path(file_path, library_id, file_type=file_type)
 
-print("Available libraries:")
-for i, lib in enumerate(libraries, 1):
-    print(f"{i}. {lib['name']} | ID: {lib['id']}")
+def perform_upload(
+    gi,
+    library_name: str,
+    file_path: str,
+    file_type: str = "auto"
+) -> Tuple[Optional[Dict], Optional[List[Dict]]]:
+    """
+    High-level wrapper: select library and upload file.
+    Returns (library, upload_result) or (None, None) if library not found.
+    """
+    library = select_library(gi, library_name)
+    if not library:
+        return None, None
+    result = upload_file(gi, library["id"], file_path, file_type=file_type)
+    return library, result
 
-# ----------------------------
-# SELECT LIBRARY INTERACTIVELY
-# ----------------------------
-choice = input("\nEnter the number of the library to upload to: ")
-try:
-    choice = int(choice)
-    if choice < 1 or choice > len(libraries):
-        raise ValueError
-except ValueError:
-    print("Invalid selection!")
-    exit(1)
+def format_upload_result(library_name: str, file_path: str, result: List[Dict]) -> List[str]:
+    """Format upload result for printing."""
+    lines = [f"Uploading file '{file_path}' to library '{library_name}'..."]
+    lines.append("Upload completed. Uploaded items:")
+    for item in result:
+        lines.append(f"- {item['name']} | ID: {item['id']} | Type: {item['file_ext']}")
+    return lines
 
-LIBRARY_ID = libraries[choice - 1]['id']
-print(f"\nSelected library: {libraries[choice - 1]['name']} (ID: {LIBRARY_ID})")
+# =========================
+# CLI / main wrapper
+# =========================
+def main():
+    print("Connecting to Galaxy...")
+    gi = get_galaxy_instance(url=GALAXY_URL, key=API_KEY)
 
-# ----------------------------
-# CHECK FILE
-# ----------------------------
-if not os.path.exists(FILE_NAME):
-    print(f"Error: File '{FILE_NAME}' not found!")
-    exit(1)
+    library_name = input("Enter the target library name: ").strip()
+    file_path = input("Enter the file path to upload: ").strip()
+    file_type = input("Enter file type (default 'auto'): ").strip() or "auto"
 
-# ----------------------------
-# UPLOAD FILE TO LIBRARY
-# ----------------------------
-print(f"\nUploading '{FILE_NAME}' to library '{libraries[choice - 1]['name']}'...")
-uploaded = gi.libraries.upload_file_from_local_path(LIBRARY_ID, FILE_NAME, file_type=FILE_TYPE)
-dataset_id = uploaded[0]['id']
-print(f"File uploaded successfully! Dataset ID: {dataset_id}")
+    library, result = perform_upload(gi, library_name, file_path, file_type=file_type)
+    if not library:
+        print(f"Library '{library_name}' not found.")
+        return
 
-# ----------------------------
-# VERIFY LIBRARY CONTENTS
-# ----------------------------
-contents = gi.libraries.get_library_contents(LIBRARY_ID)
-print(f"\nContents of library '{libraries[choice - 1]['name']}':")
-for item in contents:
-    print(f"- {item['name']} | Type: {item['type']} | ID: {item['id']}")
+    for line in format_upload_result(library_name, file_path, result):
+        print(line)
 
-print("\n✅ Data library upload complete!")
 
+if __name__ == "__main__":
+    main()

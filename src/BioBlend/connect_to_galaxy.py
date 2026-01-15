@@ -1,25 +1,37 @@
 from bioblend.galaxy import GalaxyInstance
 
-GI_URL = "http://localhost:8080"
-GI_KEY = "b8ba458fe9b1c919040db8288c56ed06"
+# ----------------------------
+# Configuration
+# ----------------------------
+GALAXY_URL = "http://localhost:8080"
+API_KEY = "b8ba458fe9b1c919040db8288c56ed06"
 
-gi = None  # Do not create instance at import time
+# ----------------------------
+def get_galaxy_instance(url=GALAXY_URL, key=API_KEY):
+    """
+    Create and return a GalaxyInstance
+    """
+    return GalaxyInstance(url=url, key=key)
 
-def get_gi():
+def test_connection(gi):
     """
-    Return a GalaxyInstance, create it if it doesn't exist yet.
-    Lazy initialization avoids connecting at import time.
+    Test connection by fetching user info or version
     """
-    global gi
-    if gi is None:
-        gi = GalaxyInstance(url=GI_URL, key=GI_KEY)
-        print("Connected to Galaxy!")
-        print("Galaxy version:", gi.config.get_version())
-    return gi
+    try:
+        version = gi.gi_version
+        return {"status": "ok", "version": version}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 def main():
-    gi_instance = get_gi()
-    # You can now use gi_instance for workflows, uploads, tools, etc.
+    print("Connecting to Galaxy...")
+    gi = get_galaxy_instance()
+
+    result = test_connection(gi)
+    if result["status"] == "ok":
+        print(f"Connected successfully! Galaxy version: {result['version']}")
+    else:
+        print(f"Connection failed: {result['message']}")
 
 if __name__ == "__main__":
     main()

@@ -1,53 +1,75 @@
-#!/usr/bin/env python3
+# src/BioBlend/create_sample_workflow.py
 from bioblend.galaxy import GalaxyInstance
-import json
 
 # ----------------------------
 # CONFIGURATION
 # ----------------------------
 GALAXY_URL = "http://localhost:8080"
-API_KEY = "b8ba458fe9b1c919040db8288c56ed06"  # Replace with your Galaxy API key
-
-# Sample workflow details
-WORKFLOW_NAME = "Sample_Workflow"
-WORKFLOW_DESC = "This is a sample workflow created via Bioblend"
-TOOL_ID = "cat1"  # Simple tool for testing
-STEP_LABEL = "Concatenate Step"
+API_KEY = "b8ba458fe9b1c919040db8288c56ed06"
 
 # ----------------------------
-# CONNECT TO GALAXY
+# FUNCTIONS
 # ----------------------------
-gi = GalaxyInstance(url=GALAXY_URL, key=API_KEY)
-print("Connected to Galaxy.")
+def get_galaxy_instance():
+    """Return a connected GalaxyInstance"""
+    return GalaxyInstance(url=GALAXY_URL, key=API_KEY)
 
-# ----------------------------
-# CREATE A NEW WORKFLOW
-# ----------------------------
-workflow_dict = {
-    "name": WORKFLOW_NAME,
-    "annotation": WORKFLOW_DESC,
-    "steps": {
-        "0": {
+def create_workflow(gi, name, annotation="", steps=None):
+    """
+    Create a simple workflow in Galaxy.
+    steps: list of dicts, each dict must have 'tool_id' and optional 'label'
+    """
+    if steps is None:
+        steps = []
+
+    workflow_dict = {
+        "name": name,
+        "annotation": annotation,
+        "steps": {}
+    }
+
+    for idx, step in enumerate(steps):
+        tool_id = step["tool_id"]
+        label = step.get("label", f"Step {idx}")
+        workflow_dict["steps"][str(idx)] = {
             "type": "tool",
-            "tool_id": TOOL_ID,
-            "tool_version": gi.tools.show_tool(TOOL_ID)['version'],
-            "label": STEP_LABEL,
+            "tool_id": tool_id,
+            "tool_version": gi.tools.show_tool(tool_id)["version"],
+            "label": label,
             "inputs": {}
         }
-    }
-}
 
-# Import workflow to Galaxy
-imported_workflow = gi.workflows.import_workflow_dict(workflow_dict)
-workflow_id = imported_workflow['id']
-print(f"\nSample workflow '{WORKFLOW_NAME}' created successfully with ID: {workflow_id}")
+    imported_workflow = gi.workflows.import_workflow_dict(workflow_dict)
+    return imported_workflow["id"]
+
+def show_workflows(gi):
+    """Return list of all workflows"""
+    return gi.workflows.get_workflows()
 
 # ----------------------------
-# LIST ALL WORKFLOWS TO VERIFY
+# MAIN FUNCTION (TESTABLE)
 # ----------------------------
-workflows = gi.workflows.get_workflows()
-print("\nCurrent workflows on the server:")
-for wf in workflows:
-    print(f"- {wf['name']} | ID: {wf['id']} | Published: {wf.get('published', False)}")
+def main():
+    gi = get_galaxy_instance()
+    workflow_id = create_workflow(
+        gi,
+        name="Sample_Workflow",
+        annotation="This is a sample workflow created via Bioblend",
+        steps=[{"tool_id": "cat1", "label": "Concatenate Step"}]
+    )
+    workflows = show_workflows(gi)
 
-print("\n✅ Workflow creation and verification complete!")
+    # Optional printing for CLI
+    print(f"Workflow created with ID: {workflow_id}")
+    print("\nCurrent workflows on server:")
+    for wf in workflows:
+        print(f"- {wf['name']} | ID: {wf['id']} | Published: {wf.get('published', False)}")
+    print("\n✅ Workflow creation and verification complete!")
+
+    return workflow_id, workflows
+
+# ----------------------------
+# SCRIPT ENTRY
+# ----------------------------
+if __name__ == "__main__":
+    main()

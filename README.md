@@ -1,5 +1,9 @@
 # Galaxy Automation with BioBlend (Python)
 
+[![CI](https://github.com/ASMAMAWABATEH/Bioblend-Use-Case/actions/workflows/ci.yml/badge.svg)](https://github.com/ASMAMAWABATEH/Bioblend-Use-Case/actions/workflows/ci.yml)
+[![Coverage Status](https://img.shields.io/badge/coverage-96%25-yellowgreen)](https://github.com/ASMAMAWABATEH/Bioblend-Use-Case/actions/workflows/ci.yml)
+
+
 ## Overview
 This repository demonstrates practical use cases for the **BioBlend** Python library to programmatically control and automate the **Galaxy** data analysis platform. It covers connecting to Galaxy servers, managing datasets, libraries, and workflows via Python code, with comprehensive unit tests to verify functionality.
 
@@ -15,7 +19,7 @@ Using BioBlend, the project implements and tests the following capabilities:
 Each feature is covered by unit tests to ensure expected behavior and correctness.
 
 ## Technology Stack
-- Python 3.11+
+- Python 3.12
 - BioBlend (Galaxy API client)
 - Galaxy (local instance)
 - pytest / unittest (for automated testing)
@@ -43,6 +47,7 @@ Each feature is covered by unit tests to ensure expected behavior and correctnes
 │   ├── view_histories_datasets.py
 │   └── view_workflows.py
 ├── tests/
+│   ├── test_auto_upload_to_library.py
 │   ├── test_bioblend_history_run.py
 │   ├── test_connect_to_galaxy.py
 │   ├── test_create_sample_workflow.py
@@ -97,11 +102,11 @@ export GALAXY_API_KEY="my_api_key_here"
 ## Usage
 The scripts in `src/BioBlend/` provide concrete, task-oriented examples of automating Galaxy using BioBlend:
 
+- `auto_upload_to_library.py` – Automatically uploads datasets to Galaxy data libraries.
 - `connect_to_galaxy.py` – Establishes authentication and connection to a Galaxy server
 - `view_histories_datasets.py` – Lists and inspects Galaxy histories and datasets
 - `bioblend_history_run.py` – Creates and runs analyses within Galaxy histories
 - `upload_and_run_tool.py` – Uploads datasets and executes Galaxy tools programmatically
-- `auto_upload_to_library.py` – Automatically uploads datasets to Galaxy data libraries
 - `interactive_upload_to_library.py` – Interactive dataset upload to Galaxy libraries
 - `upload_to_library.py` – Handles direct uploads to Galaxy libraries
 - `view_data_library.py` – Views and inspects Galaxy data libraries
@@ -116,6 +121,7 @@ Each script is modular, reusable, and easy to integrate into larger automation p
 
 Unit tests are provided in `tests/` and mirror the scripts in `src/BioBlend/`:
 
+- `test_auto_upload_to_library.py` – Tests automatic uploads to Galaxy libraries.
 - `test_connect_to_galaxy.py` – Tests Galaxy server connection and authentication
 - `test_view_histories_datasets.py` – Tests listing and inspection of histories and datasets
 - `test_bioblend_history_run.py` – Tests running analyses in Galaxy histories
@@ -131,7 +137,7 @@ Unit tests are provided in `tests/` and mirror the scripts in `src/BioBlend/`:
 Run all tests locally:
 
 ```bash
-pytest -v tests/
+pytest
 ```
 
 ## CI/CD Integration (GitHub Actions)

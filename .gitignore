@@ -17,3 +17,5 @@ htmlcov/
 # Local / broken scripts
 broken_scripts/
 exported_workflows/
+.env
+lib64/

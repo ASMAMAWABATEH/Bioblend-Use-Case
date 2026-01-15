@@ -1,44 +1,37 @@
-#!/usr/bin/env python3
+# BioBlend/view_workflows.py
 from bioblend.galaxy import GalaxyInstance
-import sys
 
-# ----------------------------
-# CONFIGURATION
-# ----------------------------
 GALAXY_URL = "http://localhost:8080"
-API_KEY = "b8ba458fe9b1c919040db8288c56ed06"  # Replace with your Galaxy API key
+API_KEY = "b8ba458fe9b1c919040db8288c56ed06"
 
-# ----------------------------
-# CONNECT TO GALAXY
-# ----------------------------
-gi = GalaxyInstance(url=GALAXY_URL, key=API_KEY)
-print("Connected to Galaxy.")
+def get_galaxy_instance(url=GALAXY_URL, key=API_KEY):
+    """Create and return a GalaxyInstance"""
+    return GalaxyInstance(url=url, key=key)
 
-# ----------------------------
-# LIST ALL WORKFLOWS
-# ----------------------------
-workflows = gi.workflows.get_workflows()
-print(f"\nFound {len(workflows)} workflows on the server.\n")
-
-if not workflows:
-    print("No workflows found.")
-else:
+def list_workflows(gi):
+    """Return structured list of workflows"""
+    workflows = gi.workflows.get_workflows()
+    result = []
     for wf in workflows:
-        wf_id = wf['id']
-        wf_name = wf['name']
-        published = wf.get('published', False)
-        owner = wf.get('owner', 'N/A')
+        wf_details = gi.workflows.show_workflow(wf['id'])
+        result.append({
+            'id': wf['id'],
+            'name': wf['name'],
+            'published': wf.get('published', False),
+            'owner': wf.get('owner', 'N/A'),
+            'steps': wf_details.get('steps', {})
+        })
+    return result
 
-        print(f"Workflow: {wf_name}")
-        print(f"- ID: {wf_id}")
-        print(f"- Published: {published}")
-        print(f"- Owner: {owner}")
+def main():
+    """Main execution function"""
+    gi = get_galaxy_instance()
+    workflows = list_workflows(gi)
+    for wf in workflows:
+        print(f"Workflow: {wf['name']}")
+        print(f"Published: {wf['published']}, Owner: {wf['owner']}")
+        print(f"Steps: {list(wf['steps'].keys())}")
+        print("-" * 40)
 
-        # Show workflow steps
-        wf_details = gi.workflows.show_workflow(wf_id)
-        steps = wf_details.get('steps', {})
-        print(f"- Total Steps: {len(steps)}")
-
-        for step_id, step in steps.items():
-            print(f"  Step {step_id}: Tool ID: {step.get('tool_id')} | Label: {step.get('label')}")
-        print()
+if __name__ == "__main__":
+    main()
